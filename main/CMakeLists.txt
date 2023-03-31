@@ -3,4 +3,5 @@ idf_component_register(SRCS "main.c"
                             "water_level.c"
                             "temperature.c"
                             "control.c"
+                            "idle.c"
                     INCLUDE_DIRS "../include")

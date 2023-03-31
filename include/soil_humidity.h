@@ -2,7 +2,10 @@
  * @file soil_humidity.c
  * @brief The tasks and functions to check humidity of soil.
  */
+#include "freertos/FreeRTOS.h"
+#include "freertos/queue.h"
 
+#include "control.h"
 
 /**
  * @brief Tha task to check soil humidity. Capacitive sensor is connected to the mictrocontrller pin which measure the value by ADC.
