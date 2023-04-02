@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
+#include "freertos/queue.h"
 #include "driver/gpio.h"
 #include "esp_log.h"
 #include "owb.h"
@@ -100,6 +101,9 @@ void check_temperature (void *pvParameters) {
                 ++errors_count[i];
             }
             printf("  %d: %.1f    %d errors\n", i, readings[i], errors_count[i]);
+            xSemaphoreTake(SemTemperatureQueue, portMAX_DELAY);
+            xQueueSend(QueueAirTemperature, &readings[i], portMAX_DELAY);
+            xSemaphoreGive(SemTemperatureQueue);
         }
         vTaskDelayUntil(&last_wake_time, SAMPLE_PERIOD / portTICK_PERIOD_MS);
     }
