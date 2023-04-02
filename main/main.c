@@ -1,18 +1,25 @@
+/**
+ * @file main.c
+ * @brief The tasks and functions to check humidity of soil.
+ */
+
 #include <stdio.h>
-//FreeRTOS
+/* FreeRTOS */
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "freertos/queue.h"
 #include "driver/gpio.h"
-//My own files
+/* My own files */
 #include "control.h"
 #include "soil_humidity.h"
+#include "temperature.h"
 #include "idle.h"
 
 TaskHandle_t task_SoilHumidity;
 TaskHandle_t task_Control;
+TaskHandle_t task_WaterTemperature;
 
-// WARN: (GROUP_1) structure to check adc voltage of soil humidity
+/* WARN: (GROUP_1) structure to check adc voltage of soil humidity */
 gpio_config_t led_test = {
     .intr_type = GPIO_INTR_DISABLE,
     .mode = GPIO_MODE_OUTPUT,
@@ -22,11 +29,12 @@ gpio_config_t led_test = {
 };
 
 void app_main (void) {
-    // (GROUP_1)
+    /* (GROUP_1) */
     gpio_config(&led_test);
     gpio_set_level(GPIO_NUM_25, 1);
 
     xTaskCreate(control_task, "The one to control others.", 2048, NULL, 1, &task_Control);
     xTaskCreate(check_humidity, "Check the soil humidity.", 2048, NULL, 1, &task_SoilHumidity);
+    xTaskCreate(check_temperature, "Check the temperature of water.", 2048, NULL, 2, &task_WaterTemperature);
     xTaskCreate( vTaskIdle, "Idle", configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY, NULL );
 }
