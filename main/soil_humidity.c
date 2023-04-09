@@ -37,12 +37,12 @@ void check_humidity (void *pvParameters) {
         .bitwidth = ADC_BITWIDTH_DEFAULT,
         .atten = ADC_ATTEN_DB_11,
     };
-    ESP_ERROR_CHECK(adc_oneshot_config_channel(adc_humidity, ADC_CHANNEL_5, &config));
+    ESP_ERROR_CHECK(adc_oneshot_config_channel(adc_humidity, ADC_CHANNEL_9, &config));
 
     /*  Calibration */
     adc_cali_handle_t cali_handle;
     adc_cali_line_fitting_config_t cali_config = {
-        .unit_id = ADC_UNIT_1,
+        .unit_id = ADC_UNIT_2,
         .atten = ADC_ATTEN_DB_11,
         .bitwidth = ADC_BITWIDTH_DEFAULT,
     };
@@ -50,7 +50,7 @@ void check_humidity (void *pvParameters) {
 
     while (1) {
         /* Read raw resoult */
-        ESP_ERROR_CHECK(adc_oneshot_read(adc_humidity, ADC_CHANNEL_5, &adc_raw[0][0]));
+        ESP_ERROR_CHECK(adc_oneshot_read(adc_humidity, ADC_CHANNEL_9, &adc_raw[0][0]));
         /* Convert raw data to a readable value. */
         ESP_ERROR_CHECK(adc_cali_raw_to_voltage(cali_handle, adc_raw[0][0], &voltage[0][0]));
         /* Send a readable value to the queue. */
