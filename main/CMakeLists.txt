@@ -7,11 +7,8 @@ idf_component_register(SRCS "main.c"
                             "wifi.c"
                             "http.c"
                             "nvm_storage.c"
-<<<<<<< HEAD
                             "settings.c"
                             "adc_config.c"
-=======
->>>>>>> 552bbe6945a10bffcab60a8337372cc8890409b4
                     SRC_DIRS "ulp"
                     INCLUDE_DIRS "../include"
                     REQUIRES esp32-owb
