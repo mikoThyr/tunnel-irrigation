@@ -13,6 +13,7 @@ extern QueueHandle_t QueueAirTemperature;
 extern QueueHandle_t QueueWaterTemperature;
 
 extern SemaphoreHandle_t SemHumidityQueue;
-extern SemaphoreHandle_t SemTemperatureQueue;
+extern SemaphoreHandle_t SemAirTemperatureQueue;
+extern SemaphoreHandle_t SemWaterTemperatureQueue;
 
 void control_task (void *pvParameters);

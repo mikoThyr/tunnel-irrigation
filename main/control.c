@@ -13,15 +13,14 @@
 
 #include "control.h"
 
-extern TaskHandle_t task_SoilHumidity;
-
 /**< The queue stored a voltage value from soil humidity ADC.*/
 QueueHandle_t QueueSoilHumidity;
 QueueHandle_t QueueAirTemperature;
 QueueHandle_t QueueWaterTemperature;
 
 SemaphoreHandle_t SemHumidityQueue = NULL;
-SemaphoreHandle_t SemTemperatureQueue = NULL;
+SemaphoreHandle_t SemAirTemperatureQueue = NULL;
+SemaphoreHandle_t SemWaterTemperatureQueue = NULL;
 
 /**
  * @brief Take the voltage value from soil humidity queue.
@@ -30,32 +29,43 @@ SemaphoreHandle_t SemTemperatureQueue = NULL;
  *                          variable is equel of this value.
  */
 int readHumidityQueue (void) {
-    int adcValue[1][1] = {0};
+    int value = 0;
         /* Check if there is any value in the queue. */
     if (uxQueueMessagesWaiting(QueueSoilHumidity) != 0) {
         xSemaphoreTake(SemHumidityQueue, portMAX_DELAY);
-        xQueueReceive(QueueSoilHumidity, &adcValue, portMAX_DELAY);
+        xQueueReceive(QueueSoilHumidity, &value, portMAX_DELAY);
         xSemaphoreGive(SemHumidityQueue);
-        return adcValue[0][0];
+        return value;
     } else {
         return -1;
     }
 }
 
-char * readTemperatureQueue (void) {
-    char * value = {0};
+int readAirTemperatureQueue (void) {
+    int value = 0;
         /* Check if there is any value in the queue. */
     if (uxQueueMessagesWaiting(QueueAirTemperature) != 0) {
-        xSemaphoreTake(SemTemperatureQueue, portMAX_DELAY);
+        xSemaphoreTake(SemAirTemperatureQueue, portMAX_DELAY);
         xQueueReceive(QueueAirTemperature, &value, portMAX_DELAY);
-        xSemaphoreGive(SemTemperatureQueue);
-        printf("%s\n", value);
+        xSemaphoreGive(SemAirTemperatureQueue);
         return value;
     } else {
-        return "-1";
+        return -1;
     }
 }
 
+int readWaterTemperatureQueue (void) {
+    int value = 0;
+        /* Check if there is any value in the queue. */
+    if (uxQueueMessagesWaiting(QueueWaterTemperature) != 0) {
+        xSemaphoreTake(SemWaterTemperatureQueue, portMAX_DELAY);
+        xQueueReceive(QueueWaterTemperature, &value, portMAX_DELAY);
+        xSemaphoreGive(SemWaterTemperatureQueue);
+        return value;
+    } else {
+        return -1;
+    }
+}
 
 /**
  * @brief The control task to gathering data from soil humidity,
@@ -64,19 +74,33 @@ char * readTemperatureQueue (void) {
  */
 void control_task (void *pvParameters) {
     int adcVoltage; /**< ADC voltage value from soil humidity measurement. */
+    int adcAirTemperature;
+    int adcWaterTemperature;
+
     /* Initialize the soil humidity queue to transfer datas between the tasks. */
-    QueueSoilHumidity = xQueueCreate( 3, sizeof( uint32_t ) );
-    QueueAirTemperature = xQueueCreate( 3, sizeof( float ) );
-    QueueWaterTemperature = xQueueCreate( 3, sizeof( float ) );
+    QueueSoilHumidity = xQueueCreate( 3, sizeof( int ) );
+    QueueAirTemperature = xQueueCreate( 3, sizeof( int ) );
+    QueueWaterTemperature = xQueueCreate( 3, sizeof( int ) );
 
     SemHumidityQueue = xSemaphoreCreateMutex();
-    SemTemperatureQueue = xSemaphoreCreateMutex();
+    SemAirTemperatureQueue = xSemaphoreCreateMutex();
+    SemWaterTemperatureQueue = xSemaphoreCreateMutex();
+
     while (1) {
         adcVoltage = readHumidityQueue();
         if (adcVoltage >= 0) {
             printf("Humidity of the soil (ADC voltage): %d\n", adcVoltage);
         }
-        readTemperatureQueue();
+        adcAirTemperature = readAirTemperatureQueue();
+        if (adcAirTemperature >= 0) {
+            printf("Temperature of the air (ADC voltage): %d\n", adcAirTemperature);
+        }
+        adcWaterTemperature = readWaterTemperatureQueue();
+        if (adcWaterTemperature >= 0) {
+            printf("Temperature of the water (ADC voltage): %d\n", adcWaterTemperature);
+        }
+
+
         vTaskDelay(1000 / portTICK_PERIOD_MS);
     }
 }

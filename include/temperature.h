@@ -7,4 +7,6 @@
 
 #include "control.h"
 
-void check_temperature (void *pvParameters);
+void check_airtemperature (void *pvParameters);
+
+void check_watertemperature (void *pvParameters);
