@@ -1,18 +1,4 @@
-#include <stdio.h>
-#include <string.h>
-#include "esp_mac.h"
-#include "esp_wifi.h"
-#include "esp_event.h"
-#include "esp_err.h"
-#include <esp_system.h>
-#include "nvs_flash.h"
-#include "nvs.h"
-#include "esp_event.h"
-#include "lwip/err.h"
-#include "lwip/sys.h"
-
 #include "wifi.h"
-#include "nvm_storage.h"
 
 static esp_netif_t *netif_ap = NULL;
 static esp_netif_t *netif_sta = NULL;
@@ -37,28 +23,44 @@ void wifi_ap_mode (void) {
 	ESP_ERROR_CHECK(esp_wifi_set_config(ESP_IF_WIFI_AP, &wifi_config));
 }
 
-void wifi_sta_mode ( void ) {
-    esp_err_t err;
-    char *value = "";
+esp_err_t wifi_sta_mode ( void ) {
+    esp_err_t error_status;
+    char *value;
 
     wifi_config_t wifi_config = {};
 
-    *value = read_nvm_data ( "storage", "ssid" );
+    value = get_str_variable ( "storage", "ssid" );
     strcpy((char* )wifi_config.sta.ssid, value);
-    *value = read_nvm_data ( "storage", "pass" );
+    free(value);
+    value = get_str_variable ( "storage", "pass" );
     strcpy((char* )wifi_config.sta.password, value);
+    free(value);
 
     ESP_ERROR_CHECK( esp_wifi_set_mode(WIFI_MODE_STA) );
-	ESP_ERROR_CHECK( esp_wifi_set_config(ESP_IF_WIFI_STA, &wifi_config) );
-	err = esp_wifi_connect();
-	printf("wifi_sta_mode(): %s\n", esp_err_to_name(err));
+	ESP_ERROR_CHECK( esp_wifi_set_config(ESP_IF_WIFI_STA, &wifi_config));
+
+    error_status = esp_wifi_start();
+	error_status = esp_wifi_connect();
+    uint8_t status_loop = 0;
+    while (error_status == ESP_ERR_WIFI_NOT_STARTED) {
+        vTaskDelay(1000 / portTICK_PERIOD_MS);
+        error_status = esp_wifi_connect();
+        status_loop++;
+        if (status_loop >= 10) {
+            return error_status;
+        }
+    }
+    printf("Start wifi (wifi_sta_mode): %s\n", esp_err_to_name(error_status));
+    return error_status;
 }
 
 static void event_handler (void* arg, esp_event_base_t event_base, int32_t event_id, void* event_data) {
 	if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_DISCONNECTED) {
 		esp_wifi_connect();
 		printf("Retry to connect to the AP\n");
-	}
+	} else if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_WIFI_READY) {
+        printf("WIFI_EVENT_WIFI_READY\n");
+    }
 }
 
 void configure_wifi (void) {
@@ -111,12 +113,12 @@ esp_err_t start_wifi (wifi_mode_t set_mode) {
 			}
 			break;
 		case WIFI_MODE_NULL:
+            printf("Start wifi: WIFI_MODE_NULL\n");
 			if (set_mode & WIFI_MODE_STA) {
-				error_status = esp_wifi_start();
-				wifi_sta_mode();
+                error_status = wifi_sta_mode();
 			} else if (set_mode & WIFI_MODE_AP) {
+                wifi_ap_mode();
 				error_status = esp_wifi_start();
-				wifi_ap_mode();
 			} else {
 				error_status = ESP_FAIL;
 			}

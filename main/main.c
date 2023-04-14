@@ -24,15 +24,19 @@
 #include "control.h"
 #include "soil_humidity.h"
 #include "temperature.h"
-#include "wifi.h"
+#include "day_time.h"
 #include "idle.h"
-#include "nvm_storage.h"
 #include "settings.h"
+#include "wifi.h"
+#include "water_level.h"
+#include "http.h"
 
-#define LED_PIN         GPIO_NUM_33 // RTC_GPIO08
-#define ADC_AIRTEMP     GPIO_NUM_25 // RTC_GPIO06   ADC2_CH8
-#define ADC_HUMMIDITY   GPIO_NUM_26 // RTC_GPIO07   ADC2_CH9
-
+// #define ADC_HUMMIDITY    GPIO_NUM_36     RTC_GPIO00  ADC1_CH0
+// #define ADC_AIRTEMP      GPIO_NUM_39     RTC_GPIO03  ADC1_CH3
+// #define ADC_WATERTEMP    GPIO_NUM_34     RTC_GPIO04  ADC1_CH6
+// #define ADC_DAYTIME      GPIO_NUM_35     RTC_GPIO05  ADC1_CH7
+// #define PIN_TANK_PUMP    GPIO_NUM_25     RTC_GPIO06
+// #define PIN_WATERLEVEL   GPIO_NUM_26     RTC_GPIO07
 
 extern const uint8_t ulp_main_bin_start[] asm("_binary_ulp_main_bin_start");
 extern const uint8_t ulp_main_bin_end[]   asm("_binary_ulp_main_bin_end");
@@ -41,19 +45,32 @@ TaskHandle_t task_SoilHumidity;
 TaskHandle_t task_Control;
 TaskHandle_t task_AirTemperature;
 TaskHandle_t task_WaterTemperature;
+TaskHandle_t task_DayTime;
+TaskHandle_t task_WaterLevel;
 
 void run_tasks (void);
 void run_ulp (void);
 
 
 void app_main (void) {
-    program_mode_t dev_mode;
+    esp_err_t error_status;
+    int8_t dev_mode;
+    int8_t dev_wifi;
     configure_nvm();
     set_global_variables();
 
-    dev_mode = NORMAL; // check_one_variable("storage", "mode");
+    /* A ECO mode has not yet been programmed. */
+    dev_mode = get_i8_variable("storage", "mode");
     if (dev_mode == NORMAL) {
         configure_wifi();
+        dev_wifi = get_i8_variable("storage", "wifi");
+        if (dev_wifi == WIFI_ON) {
+            error_status = start_wifi(WIFI_MODE_STA);
+            if (error_status == ESP_OK) {
+                // start_http_client(temperature, humidity);
+                printf("Start HTTP.\n");
+            }
+        }
         run_tasks();
     } else if (dev_mode == ECO) {
         run_ulp();
@@ -63,18 +80,17 @@ void app_main (void) {
 }
 
 void run_tasks (void) {
-    xTaskCreate(control_task, "The one to control others.", 2048, NULL, 2, &task_Control);
-    xTaskCreate(check_humidity, "Check humidity of the soil.", 1024, NULL, 1, &task_SoilHumidity);
-    xTaskCreate(check_airtemperature, "Check temperature of the air.", 1024, NULL, 1, &task_AirTemperature);
-    xTaskCreate(check_watertemperature, "Check temperature of the water.", 1024, NULL, 1, &task_WaterTemperature);
+    xTaskCreatePinnedToCore(control_task, "The one to control others.", 2048, NULL, 2, &task_Control, 1);
+    xTaskCreatePinnedToCore(check_humidity, "Check humidity of the soil.", 1024, NULL, 1, &task_SoilHumidity, 1);
+    xTaskCreatePinnedToCore(check_airtemperature, "Check temperature of the air.", 1024, NULL, 1, &task_AirTemperature, 1);
+    xTaskCreatePinnedToCore(check_watertemperature, "Check temperature of the water.", 1024, NULL, 1, &task_WaterTemperature, 1);
+    xTaskCreatePinnedToCore(check_daytime, "Check time of day.", 1024, NULL, 1, &task_DayTime, 1);
+    xTaskCreatePinnedToCore(check_water, "Check water level.", 2048, NULL, 1, &task_WaterLevel, 1);
+
     xTaskCreate(vTaskIdle, "Idle", configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY, NULL);
 }
 
 void run_ulp (void) {
-    rtc_gpio_init(LED_PIN);
-    rtc_gpio_pulldown_en(LED_PIN);
-    rtc_gpio_set_direction(LED_PIN, RTC_GPIO_MODE_OUTPUT_ONLY);
-
     esp_sleep_wakeup_cause_t cause = esp_sleep_get_wakeup_cause();
     if (cause != ESP_SLEEP_WAKEUP_TIMER) { // ESP_SLEEP_WAKEUP_ULP) {
         ulp_load_binary(0, ulp_main_bin_start, (ulp_main_bin_end - ulp_main_bin_start) / sizeof(uint32_t));

@@ -1,7 +1,14 @@
+#ifndef ADC_CONFIG_H
+#define ADC_CONFIG_H
+
 #include <stdlib.h>
-#include "driver/adc_types_legacy.h"
+#include "esp_err.h"
+#include "esp_log.h"
+#include "hal/adc_types.h"
+#include "esp_adc/adc_oneshot.h"
 
+void adc_init (void);
 
-void adc_init(adc2_channel_t channel);
+int adc_read (adc_channel_t channel);
 
-uint32_t adc_read(adc2_channel_t channel);
+#endif

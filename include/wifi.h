@@ -1,6 +1,18 @@
+#ifndef WIFI_H
+#define WIFI_H
+
 #include <stdio.h>
-#include <stdint.h>
+#include <string.h>
+#include "esp_mac.h"
 #include "esp_wifi.h"
+#include "esp_event.h"
+#include "esp_err.h"
+#include <esp_system.h>
+#include "nvs_flash.h"
+#include "nvs.h"
+#include "lwip/err.h"
+#include "lwip/sys.h"
+#include "settings.h"
 
 #define ESP_WIFI_SSID_AP	CONFIG_ESP_WIFI_SSID_AP
 #define ESP_WIFI_PASS_AP	CONFIG_ESP_WIFI_PASSWORD_AP
@@ -12,4 +24,5 @@
 
 void configure_wifi(void);
 esp_err_t start_wifi (wifi_mode_t set_mode);
-char read_nvm_data (char *namespace, char *key);
+
+#endif

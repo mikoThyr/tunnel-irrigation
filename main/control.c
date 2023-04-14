@@ -4,28 +4,12 @@
  *      chceks the values of the soil humidity, temperature and water level and
  *      in the proper moment start the pump.
  */
-#include <stdlib.h>
-#include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
-#include "freertos/queue.h"
-#include "freertos/semphr.h"
-#include "esp_timer.h"
-
 #include "control.h"
-
-/**< The queue stored a voltage value from soil humidity ADC.*/
-QueueHandle_t QueueSoilHumidity;
-QueueHandle_t QueueAirTemperature;
-QueueHandle_t QueueWaterTemperature;
-
-SemaphoreHandle_t SemHumidityQueue = NULL;
-SemaphoreHandle_t SemAirTemperatureQueue = NULL;
-SemaphoreHandle_t SemWaterTemperatureQueue = NULL;
 
 /**
  * @brief Take the voltage value from soil humidity queue.
- * @return int adcValue: -1: if queue is empty the value of variable is equel -1.
- *                       >0: if there is value in the queue, the adcValue
+ * @return int adcValue: -1: if no queue the value will be equel -1.
+ *                       >=0: if there is value in the queue, the adcValue
  *                          variable is equel of this value.
  */
 int readHumidityQueue (void) {
@@ -67,40 +51,53 @@ int readWaterTemperatureQueue (void) {
     }
 }
 
+int readDayTimeQueue (void) {
+    int value = 0;
+        /* Check if there is any value in the queue. */
+    if (uxQueueMessagesWaiting(QueueDayTime) != 0) {
+        xSemaphoreTake(SemDayTimeQueue, portMAX_DELAY);
+        xQueueReceive(QueueDayTime, &value, portMAX_DELAY);
+        xSemaphoreGive(SemDayTimeQueue);
+        return value;
+    } else {
+        return -1;
+    }
+}
+
 /**
  * @brief The control task to gathering data from soil humidity,
  *      temperature water and water level. Also a task control the irrigation
  *      system.
  */
 void control_task (void *pvParameters) {
-    int adcVoltage; /**< ADC voltage value from soil humidity measurement. */
+    int adcHumidity;
     int adcAirTemperature;
     int adcWaterTemperature;
-
-    /* Initialize the soil humidity queue to transfer datas between the tasks. */
-    QueueSoilHumidity = xQueueCreate( 3, sizeof( int ) );
-    QueueAirTemperature = xQueueCreate( 3, sizeof( int ) );
-    QueueWaterTemperature = xQueueCreate( 3, sizeof( int ) );
-
-    SemHumidityQueue = xSemaphoreCreateMutex();
-    SemAirTemperatureQueue = xSemaphoreCreateMutex();
-    SemWaterTemperatureQueue = xSemaphoreCreateMutex();
-
+    int adcDayTime;
+    adc_init();
+    vTaskDelay(1 * 1000 / portTICK_PERIOD_MS);
     while (1) {
-        adcVoltage = readHumidityQueue();
-        if (adcVoltage >= 0) {
-            printf("Humidity of the soil (ADC voltage): %d\n", adcVoltage);
+        int8_t time_status = get_i8_variable("storage", "time_day");
+        if (time_status) {
+            adcDayTime = readDayTimeQueue();
+            if (adcDayTime != -1) {
+                printf("D    %d | ", adcDayTime);
+            }
+        }
+
+        adcHumidity = readHumidityQueue();
+        if (adcHumidity != -1) {
+            printf("H(s) %d | ", adcHumidity);
         }
         adcAirTemperature = readAirTemperatureQueue();
-        if (adcAirTemperature >= 0) {
-            printf("Temperature of the air (ADC voltage): %d\n", adcAirTemperature);
+        if (adcAirTemperature != -1) {
+            printf("T(a) %d | ", adcAirTemperature);
         }
         adcWaterTemperature = readWaterTemperatureQueue();
-        if (adcWaterTemperature >= 0) {
-            printf("Temperature of the water (ADC voltage): %d\n", adcWaterTemperature);
+        if (adcWaterTemperature != -1) {
+            printf("T(w) %d\n", adcWaterTemperature);
         }
 
-
-        vTaskDelay(1000 / portTICK_PERIOD_MS);
+        vTaskDelay(500 / portTICK_PERIOD_MS);
     }
 }
