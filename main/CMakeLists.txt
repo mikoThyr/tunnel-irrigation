@@ -9,6 +9,7 @@ idf_component_register(SRCS "main.c"
                             "settings.c"
                             "adc_config.c"
                             "day_time.c"
+                            "ap_mode.c"
                     SRC_DIRS "ulp"
                     INCLUDE_DIRS "../include"
                     REQUIRES esp32-owb

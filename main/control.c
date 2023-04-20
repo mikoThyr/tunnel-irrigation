@@ -25,8 +25,8 @@ int readHumidityQueue (void) {
     }
 }
 
-int readAirTemperatureQueue (void) {
-    int value = 0;
+int8_t readAirTemperatureQueue (void) {
+    int8_t value;
         /* Check if there is any value in the queue. */
     if (uxQueueMessagesWaiting(QueueAirTemperature) != 0) {
         xSemaphoreTake(SemAirTemperatureQueue, portMAX_DELAY);
@@ -38,8 +38,8 @@ int readAirTemperatureQueue (void) {
     }
 }
 
-int readWaterTemperatureQueue (void) {
-    int value = 0;
+int8_t readWaterTemperatureQueue (void) {
+    int8_t value;
         /* Check if there is any value in the queue. */
     if (uxQueueMessagesWaiting(QueueWaterTemperature) != 0) {
         xSemaphoreTake(SemWaterTemperatureQueue, portMAX_DELAY);
@@ -71,8 +71,8 @@ int readDayTimeQueue (void) {
  */
 void control_task (void *pvParameters) {
     int adcHumidity;
-    int adcAirTemperature;
-    int adcWaterTemperature;
+    int8_t adcAirTemperature;
+    int8_t adcWaterTemperature;
     int adcDayTime;
     adc_init();
     vTaskDelay(1 * 1000 / portTICK_PERIOD_MS);

@@ -30,6 +30,7 @@
 #include "wifi.h"
 #include "water_level.h"
 #include "http.h"
+#include "ap_mode.h"
 
 // #define ADC_HUMMIDITY    GPIO_NUM_36     RTC_GPIO00  ADC1_CH0
 // #define ADC_AIRTEMP      GPIO_NUM_39     RTC_GPIO03  ADC1_CH3
@@ -47,6 +48,7 @@ TaskHandle_t task_AirTemperature;
 TaskHandle_t task_WaterTemperature;
 TaskHandle_t task_DayTime;
 TaskHandle_t task_WaterLevel;
+TaskHandle_t task_ButtonRunAP;
 
 void run_tasks (void);
 void run_ulp (void);
@@ -54,17 +56,18 @@ void run_ulp (void);
 
 void app_main (void) {
     esp_err_t error_status;
-    int8_t dev_mode;
-    int8_t dev_wifi;
+    int8_t device_mode;
+    int8_t wifi_status;
     configure_nvm();
     set_global_variables();
 
-    /* A ECO mode has not yet been programmed. */
-    dev_mode = get_i8_variable("storage", "mode");
-    if (dev_mode == NORMAL) {
+    /*  A ECO mode has not yet been programmed so function set_global_variables
+        after first device start run program in default. */
+    device_mode = get_i8_variable("storage", "mode");
+    if (device_mode == NORMAL) {
         configure_wifi();
-        dev_wifi = get_i8_variable("storage", "wifi");
-        if (dev_wifi == WIFI_ON) {
+        wifi_status = get_i8_variable("storage", "wifi");
+        if (wifi_status == WIFI_ON) {
             error_status = start_wifi(WIFI_MODE_STA);
             if (error_status == ESP_OK) {
                 // start_http_client(temperature, humidity);
@@ -72,20 +75,21 @@ void app_main (void) {
             }
         }
         run_tasks();
-    } else if (dev_mode == ECO) {
+    } else if (device_mode == ECO) {
         run_ulp();
     } else {
-        printf("Mode status: %d\n", dev_mode);
+        printf("Mode status: %d\n", device_mode);
     }
 }
 
 void run_tasks (void) {
     xTaskCreatePinnedToCore(control_task, "The one to control others.", 2048, NULL, 2, &task_Control, 1);
     xTaskCreatePinnedToCore(check_humidity, "Check humidity of the soil.", 1024, NULL, 1, &task_SoilHumidity, 1);
-    xTaskCreatePinnedToCore(check_airtemperature, "Check temperature of the air.", 1024, NULL, 1, &task_AirTemperature, 1);
-    xTaskCreatePinnedToCore(check_watertemperature, "Check temperature of the water.", 1024, NULL, 1, &task_WaterTemperature, 1);
+    xTaskCreatePinnedToCore(check_airtemperature, "Check temperature of the air.", 2048, NULL, 1, &task_AirTemperature, 1);
+    xTaskCreatePinnedToCore(check_watertemperature, "Check temperature of the water.", 2048, NULL, 1, &task_WaterTemperature, 1);
     xTaskCreatePinnedToCore(check_daytime, "Check time of day.", 1024, NULL, 1, &task_DayTime, 1);
     xTaskCreatePinnedToCore(check_water, "Check water level.", 2048, NULL, 1, &task_WaterLevel, 1);
+    xTaskCreatePinnedToCore(button_run_ap, "Run wifi in ap mode.", 2048, NULL, 10, &task_ButtonRunAP, 1);
 
     xTaskCreate(vTaskIdle, "Idle", configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY, NULL);
 }

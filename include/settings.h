@@ -31,11 +31,6 @@ typedef enum {
     SET,
 } set_value_t;
 
-typedef enum {
-    LOW,
-    HIGH,
-} status_t;
-
 /**
  *  @brief  Function to read global variables from non-volatile memory. If there
  *          is no set variable in the memory than funtion will set default value.
