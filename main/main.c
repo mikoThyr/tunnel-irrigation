@@ -31,13 +31,14 @@
 #include "water_level.h"
 #include "http.h"
 #include "ap_mode.h"
+#include "irrigation.h"
 
-// #define ADC_HUMMIDITY    GPIO_NUM_36     RTC_GPIO00  ADC1_CH0
-// #define ADC_AIRTEMP      GPIO_NUM_39     RTC_GPIO03  ADC1_CH3
-// #define ADC_WATERTEMP    GPIO_NUM_34     RTC_GPIO04  ADC1_CH6
-// #define ADC_DAYTIME      GPIO_NUM_35     RTC_GPIO05  ADC1_CH7
-// #define PIN_TANK_PUMP    GPIO_NUM_25     RTC_GPIO06
-// #define PIN_WATERLEVEL   GPIO_NUM_26     RTC_GPIO07
+// #define ADC_HUMMIDITY        GPIO_NUM_36     RTC_GPIO00  ADC1_CH0
+// #define ADC_AIRTEMP          GPIO_NUM_39     RTC_GPIO03  ADC1_CH3
+// #define ADC_WATERTEMP        GPIO_NUM_34     RTC_GPIO04  ADC1_CH6
+// #define ADC_DAYTIME          GPIO_NUM_35     RTC_GPIO05  ADC1_CH7
+// #define PIN_PUMP1_IRRIGATION GPIO_NUM_25     RTC_GPIO06
+// #define PIN_WATERLEVEL       GPIO_NUM_26     RTC_GPIO07
 
 extern const uint8_t ulp_main_bin_start[] asm("_binary_ulp_main_bin_start");
 extern const uint8_t ulp_main_bin_end[]   asm("_binary_ulp_main_bin_end");
@@ -49,6 +50,7 @@ TaskHandle_t task_WaterTemperature;
 TaskHandle_t task_DayTime;
 TaskHandle_t task_WaterLevel;
 TaskHandle_t task_ButtonRunAP;
+TaskHandle_t task_Irrigation;
 
 void run_tasks (void);
 void run_ulp (void);
@@ -90,7 +92,7 @@ void run_tasks (void) {
     xTaskCreatePinnedToCore(check_daytime, "Check time of day.", 1024, NULL, 1, &task_DayTime, 1);
     xTaskCreatePinnedToCore(check_water, "Check water level.", 2048, NULL, 1, &task_WaterLevel, 1);
     xTaskCreatePinnedToCore(button_run_ap, "Run wifi in ap mode.", 2048, NULL, 10, &task_ButtonRunAP, 1);
-
+    xTaskCreatePinnedToCore(irrigation, "Run soil wattering.", 1024, NULL, 1, &task_Irrigation, 1);
     xTaskCreate(vTaskIdle, "Idle", configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY, NULL);
 }
 

@@ -8,10 +8,13 @@
 #include "esp_timer.h"
 #include "ulp_main.h"
 #include "esp_wifi.h"
+#include "esp_err.h"
+#include "esp_log.h"
 #include "soil_humidity.h"
 #include "temperature.h"
 #include "day_time.h"
 #include "settings.h"
+#include "irrigation.h"
 
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
@@ -24,6 +27,7 @@ extern TaskHandle_t task_AirTemperature;
 extern TaskHandle_t task_WaterTemperature;
 extern TaskHandle_t task_DayTime;
 extern TaskHandle_t task_WaterLevel;
+extern TaskHandle_t task_Irrigation;
 
 void control_task (void *pvParameters);
 

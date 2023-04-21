@@ -4,6 +4,8 @@
  */
 #include "day_time.h"
 
+// #define ADC_DAYTIME          GPIO_NUM_35     RTC_GPIO05  ADC1_CH7
+
 QueueHandle_t QueueDayTime;
 SemaphoreHandle_t SemDayTimeQueue = NULL;
 
@@ -13,15 +15,15 @@ SemaphoreHandle_t SemDayTimeQueue = NULL;
  * @param
  */
 void check_daytime (void *pvParameters) {
+    uint8_t converted_value;
     QueueDayTime = xQueueCreate(3, sizeof( int ));
     SemDayTimeQueue = xSemaphoreCreateMutex();
     while (1) {
         int voltage = adc_read(ADC_CHANNEL_7);
+        converted_value = ((float)voltage / 3300) * 100;
 
-        // Obliczenie temperatury na podstawie napięcia
-        // float temp = (voltage - 500.0) / 10.0;
         xSemaphoreTake(SemDayTimeQueue, portMAX_DELAY);
-        xQueueSend(QueueDayTime, &voltage, portMAX_DELAY);
+        xQueueSend(QueueDayTime, &converted_value, portMAX_DELAY);
         xSemaphoreGive(SemDayTimeQueue);
         vTaskDelay(3 * 1000 / portTICK_PERIOD_MS);
     }

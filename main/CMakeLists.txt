@@ -10,6 +10,7 @@ idf_component_register(SRCS "main.c"
                             "adc_config.c"
                             "day_time.c"
                             "ap_mode.c"
+                            "irrigation.c"
                     SRC_DIRS "ulp"
                     INCLUDE_DIRS "../include"
                     REQUIRES esp32-owb
@@ -20,7 +21,8 @@ idf_component_register(SRCS "main.c"
                             esp_http_client
                             esp_http_server
                             esp-tls
-                            ulp)
+                            ulp
+                            freertos)
 
 set(ulp_app_name ulp_${COMPONENT_NAME})
 set(ulp_s_sources   "ulp/ulp_test.S"
