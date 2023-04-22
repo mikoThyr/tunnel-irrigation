@@ -3,7 +3,6 @@
 static esp_netif_t *netif_ap = NULL;
 static esp_netif_t *netif_sta = NULL;
 
-
 void wifi_ap_mode (void) {
 	wifi_config_t wifi_config = {
 		.ap = {
@@ -85,6 +84,7 @@ void configure_wifi (void) {
 esp_err_t start_wifi (wifi_mode_t set_mode) {
 	esp_err_t error_status;
     wifi_mode_t current_mode;
+    wifi_ap_record_t wifi_info;
 
 	error_status = esp_wifi_get_mode(&current_mode);
 
@@ -92,34 +92,41 @@ esp_err_t start_wifi (wifi_mode_t set_mode) {
 		switch(current_mode) {
 		case WIFI_MODE_STA:
 			if (set_mode & WIFI_MODE_STA) {
+                printf("1\n");
 				//error_status = esp_wifi_start();
 			} else {
-				//ESP_ERROR_CHECK(esp_wifi_stop());
-				//vTaskDelay(10 / portTICK_PERIOD_MS);
-				//error_status = esp_wifi_start();
+                printf("2\n");
 				esp_wifi_disconnect();
-				vTaskDelay(100 / portTICK_PERIOD_MS);
+                error_status = esp_wifi_sta_get_ap_info(&wifi_info);
+                while(error_status != ESP_ERR_WIFI_NOT_CONNECT) {
+                    vTaskDelay(5 / portTICK_PERIOD_MS);
+                    error_status = esp_wifi_sta_get_ap_info(&wifi_info);
+                }
 				wifi_ap_mode();
 			}
 			break;
 		case WIFI_MODE_AP:
 			if (set_mode & WIFI_MODE_AP) {
-				//error_status = esp_wifi_start();
-			} else {
-				//ESP_ERROR_CHECK(esp_wifi_stop());
-				//vTaskDelay(10 / portTICK_PERIOD_MS);
-				//error_status = esp_wifi_start();
-				wifi_ap_mode();
-			}
-			break;
-		case WIFI_MODE_NULL:
-            printf("Start wifi: WIFI_MODE_NULL\n");
-			if (set_mode & WIFI_MODE_STA) {
-                error_status = wifi_sta_mode();
-			} else if (set_mode & WIFI_MODE_AP) {
+                printf("3\n");
                 wifi_ap_mode();
 				error_status = esp_wifi_start();
 			} else {
+                printf("4\n");
+				wifi_sta_mode();
+                error_status = esp_wifi_start();
+			}
+			break;
+		case WIFI_MODE_NULL:
+			if (set_mode & WIFI_MODE_STA) {
+                printf("5\n");
+                wifi_sta_mode();
+                error_status = esp_wifi_start();
+			} else if (set_mode & WIFI_MODE_AP) {
+                printf("6\n");
+                wifi_ap_mode();
+				error_status = esp_wifi_start();
+			} else {
+                printf("7\n");
 				error_status = ESP_FAIL;
 			}
 			break;

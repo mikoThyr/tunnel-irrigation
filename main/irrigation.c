@@ -29,7 +29,7 @@ void irrigation (void *pvParameters) {
         gpio_set_level(PIN_PUMP1_IRRIGATION, 1);
         printf("Pump 1 (watering): START.\n");
         vTaskDelay(10 * 1000 / portTICK_PERIOD_MS);
-        printf("Pump 1 (watering): STOP.\n")
+        printf("Pump 1 (watering): STOP.\n");
         gpio_set_level(PIN_PUMP1_IRRIGATION, 0);
     }
 }

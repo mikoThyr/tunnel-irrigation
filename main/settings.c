@@ -155,16 +155,16 @@ void set_global_variables (void) {
     printf("Time of day (-1:ERROR, 0:DAY and NIGHT, 1:DAY): %d\n", day_flag);
 
     wifi_flag_t dev_wifi;
-    dev_wifi = check_i8_variable("storage", "wifi", WIFI_OFF, NO_SET);
+    dev_wifi = check_i8_variable("storage", "wifi", WIFI_ON, NO_SET);
     printf("Wifi (-1:ERROR, 0:OFF, 1:ON): %d\n", dev_wifi);
     check_str_variable("storage", "ssid", "SiecImperialna1", NO_SET);
     check_str_variable("storage", "pass", "1mPer1UMm", NO_SET);
 
     uint8_t value;
     value = check_i8_variable("storage", "hum_low", 60, NO_SET);
-    printf("Humidity lower level.\n");
+    printf("Humidity lower level: %d\n", value);
 
     value = check_i8_variable("storage", "hum_high", 70, NO_SET);
-    printf("Humidity upper level.\n");
+    printf("Humidity upper level: %d\n", value);
 
 }

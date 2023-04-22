@@ -37,8 +37,10 @@
 // #define ADC_AIRTEMP          GPIO_NUM_39     RTC_GPIO03  ADC1_CH3
 // #define ADC_WATERTEMP        GPIO_NUM_34     RTC_GPIO04  ADC1_CH6
 // #define ADC_DAYTIME          GPIO_NUM_35     RTC_GPIO05  ADC1_CH7
+// #define ADC_REF              GPIO_NUM_32     RTC_GPIO05  ADC1_CH4
 // #define PIN_PUMP1_IRRIGATION GPIO_NUM_25     RTC_GPIO06
 // #define PIN_WATERLEVEL       GPIO_NUM_26     RTC_GPIO07
+// #define PIN_AP_MODE          GPIO_NUM_27
 
 extern const uint8_t ulp_main_bin_start[] asm("_binary_ulp_main_bin_start");
 extern const uint8_t ulp_main_bin_end[]   asm("_binary_ulp_main_bin_end");
@@ -85,14 +87,14 @@ void app_main (void) {
 }
 
 void run_tasks (void) {
-    xTaskCreatePinnedToCore(control_task, "The one to control others.", 2048, NULL, 2, &task_Control, 1);
+    xTaskCreatePinnedToCore(control_task, "The one to control others.", 4096, NULL, 2, &task_Control, 1);
     xTaskCreatePinnedToCore(check_humidity, "Check humidity of the soil.", 1024, NULL, 1, &task_SoilHumidity, 1);
     xTaskCreatePinnedToCore(check_airtemperature, "Check temperature of the air.", 2048, NULL, 1, &task_AirTemperature, 1);
     xTaskCreatePinnedToCore(check_watertemperature, "Check temperature of the water.", 2048, NULL, 1, &task_WaterTemperature, 1);
     xTaskCreatePinnedToCore(check_daytime, "Check time of day.", 1024, NULL, 1, &task_DayTime, 1);
     xTaskCreatePinnedToCore(check_water, "Check water level.", 2048, NULL, 1, &task_WaterLevel, 1);
-    xTaskCreatePinnedToCore(button_run_ap, "Run wifi in ap mode.", 2048, NULL, 10, &task_ButtonRunAP, 1);
-    xTaskCreatePinnedToCore(irrigation, "Run soil wattering.", 1024, NULL, 1, &task_Irrigation, 1);
+    xTaskCreate(button_run_ap, "Run wifi in ap mode.", 2048, NULL, 5, &task_ButtonRunAP);
+    xTaskCreatePinnedToCore(irrigation, "Run soil wattering.", 2048, NULL, 1, &task_Irrigation, 1);
     xTaskCreate(vTaskIdle, "Idle", configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY, NULL);
 }
 

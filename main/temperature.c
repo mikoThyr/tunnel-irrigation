@@ -21,19 +21,18 @@ SemaphoreHandle_t SemWaterTemperatureQueue = NULL;
  * @param
  */
 void check_airtemperature (void *pvParameters) {
+    uint32_t voltage = 0;
+    int8_t temp = 0;
+    uint16_t resistance = 0;
+
     QueueAirTemperature = xQueueCreate(3, sizeof( int ));
     SemAirTemperatureQueue = xSemaphoreCreateMutex();
-    uint16_t B = log((float)R50/R25)/((1.00/(K0+50))-(1.00/(K0+25)));
+    uint16_t B = log((float)R50/R25)/(((float)1/(K0+50))-((float)1/(K0+25)));
     while (1) {
-        // int voltage_ref = 0;
-        uint32_t voltage = 0;
-        int8_t temp = 0;
-        uint16_t resistance = 0;
         voltage = adc_read(ADC_CHANNEL_3);
-        // voltage_ref = adc_read(ADC_CHANNEL_0);
-        resistance = (voltage * 10000) / (2900 - voltage);
-        // printf("resistance: %.3f\nvoltage_ref: %d\nvoltage: %d\n", resistance, voltage_ref, voltage);
+        resistance = (voltage * 10000) / (3300 - voltage);
         temp = (1 / ((log((float)resistance / R25) / B) + (1 / (K0+25)))) - K0;
+        // printf("AIR voltage: %d\ntemp: %d\nresistance: %d\n", voltage, temp, resistance);
 
         xSemaphoreTake(SemAirTemperatureQueue, portMAX_DELAY);
         xQueueSend(QueueAirTemperature, &temp, portMAX_DELAY);
@@ -43,18 +42,18 @@ void check_airtemperature (void *pvParameters) {
 }
 
 void check_watertemperature (void *pvParameters) {
+    uint32_t voltage = 0;
+    int8_t temp = 0;
+    uint16_t resistance = 0;
+
     QueueWaterTemperature = xQueueCreate(3, sizeof( int ));
     SemWaterTemperatureQueue = xSemaphoreCreateMutex();
     uint16_t B = 3950; //log((float)R50/R25)/((1.00/(K0+50))-(1.00/(K0+25)));
     while (1) {
-        // uint16_t voltage_ref = 0;
-        uint32_t voltage = 0;
-        int8_t temp = 0;
-        uint16_t resistance = 0;
         voltage = adc_read(ADC_CHANNEL_6);
-        resistance = (voltage * 10000) / (2900 - voltage);
-        // printf("resistance: %.3d   voltage_ref: %d   voltage: %d B: %d\n", resistance, voltage_ref, voltage, B);
+        resistance = (voltage * 10000) / (3300 - voltage);
         temp = (1 / ((log((float)resistance / R25) / B) + (1 / (K0+25)))) - K0;
+        // printf("WATER voltage: %d\ntemp: %d\nresistance: %d\nvoltage_ref: %d\n", voltage, temp, resistance, voltage_ref);
 
         xSemaphoreTake(SemWaterTemperatureQueue, portMAX_DELAY);
         xQueueSend(QueueWaterTemperature, &temp, portMAX_DELAY);
