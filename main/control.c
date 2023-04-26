@@ -12,18 +12,38 @@
  *                       >=0: if there is value in the queue, the adcValue
  *                          variable is equel of this value.
  */
-int8_t readQueue (QueueHandle_t queue, SemaphoreHandle_t semaphore) {
-    int8_t value = 0;
-        /* Check if there is any value in the queue. */
-    if (uxQueueMessagesWaiting(queue) != 0) {
-        xSemaphoreTake(semaphore, portMAX_DELAY);
-        xQueueReceive(queue, &value, portMAX_DELAY);
-        xSemaphoreGive(semaphore);
-        return value;
+esp_err_t readQueue (QueueHandle_t queue, SemaphoreHandle_t semaphore, int16_t *value) {
+    /* Check if there is any value in the queue. */
+    if ((uxQueueMessagesWaiting(queue) > 0) && (semaphore != NULL)) {
+        if (xSemaphoreTake(semaphore, (100/portTICK_PERIOD_MS)) == pdTRUE) {
+            xQueueReceive(queue, value, (100/portTICK_PERIOD_MS));
+            xSemaphoreGive(semaphore);
+            // printf("RECEIVE: %d\n", *value);
+            return ESP_OK;
+        } else {
+            return ESP_FAIL;
+        }
+    } else {
+        // printf("Queue empty.\n");
+        return ESP_FAIL;
+    }
+}
+
+esp_err_t writeQueue (QueueHandle_t queue, SemaphoreHandle_t semaphore, int16_t *value) {
+    int16_t null_value;
+    if (xSemaphoreTake(semaphore, (100/portTICK_PERIOD_MS)) == pdTRUE) {
+        if (uxQueueSpacesAvailable(queue) != 0) {
+            xQueueReceive(queue, &null_value, (100/portTICK_PERIOD_MS));
+            xQueueSendToFront(queue, value, (100/portTICK_PERIOD_MS));
+            xSemaphoreGive(semaphore);
+            // printf("SEND: %d\n", *value);
+        }
+        return ESP_OK;
     } else {
         return ESP_FAIL;
     }
 }
+
 
 /**
  * @brief The control task to gathering data from soil humidity,
@@ -31,41 +51,25 @@ int8_t readQueue (QueueHandle_t queue, SemaphoreHandle_t semaphore) {
  *      system.
  */
 void control_task (void *pvParameters) {
-    int8_t adcHumidity;             /*ADC value from queue*/
-    int8_t adcAirTemperature;       /*ADC value from queue*/
-    int8_t adcWaterTemperature;     /*ADC value from queue*/
-    int8_t adcDayTime;              /*ADC value from queue*/
-    int8_t timeConfigFlag;          /*Value to gint8_t time_statuset NVM data set in the device config*/
+    int16_t adcHumidity = 0;             /*ADC value from queue*/
+    int16_t adcWaterTemperature = 0;     /*ADC value from queue*/
+    int16_t adcDayTime = 0;              /*ADC value from queue*/
+    int8_t user_temp;
+    int8_t user_lowhumidity;
 
-    // bool irrigation_status;
+    user_lowhumidity = get_i8_variable("storDev", "hum_low");
+    user_temp = get_i8_variable("storDev", "temp");
 
-    adc_init();
-    vTaskDelay(1 * 1000 / portTICK_PERIOD_MS);
     while (1) {
-        timeConfigFlag = get_i8_variable("storage", "time_day");
-        if (timeConfigFlag) {
-            adcDayTime = readQueue(QueueDayTime, SemDayTimeQueue);
-            if (adcDayTime != ESP_FAIL) {
-                printf("D    %d | ", adcDayTime);
-            }
-        }
-
-        adcHumidity = readQueue(QueueSoilHumidity, SemHumidityQueue);
-        if (adcHumidity != ESP_FAIL) {
-            printf("H(s) %d | ", adcHumidity);
-            if (adcHumidity > 80) {
+        readQueue(QueueWaterTemperature, SemWaterTemperatureQueue, &adcWaterTemperature);
+        readQueue(QueueSoilHumidity, SemHumidityQueue, &adcHumidity);
+        readQueue(QueueDayTime, SemDayTimeQueue, &adcDayTime);
+        if ((adcWaterTemperature != -1) && (adcHumidity != -1) && (adcDayTime != -1)) {
+            printf("Water %d | Humidity %d | Day %d\n", adcWaterTemperature, adcHumidity, adcDayTime);
+            if ((adcWaterTemperature >= user_temp) && (adcHumidity <= user_lowhumidity) && adcDayTime) {
                 xTaskNotify(task_Irrigation, 0, eNoAction);
             }
         }
-        adcAirTemperature = readQueue(QueueAirTemperature, SemAirTemperatureQueue);
-        if (adcAirTemperature != ESP_FAIL) {
-            printf("T(a) %d | ", adcAirTemperature);
-        }
-        adcWaterTemperature = readQueue(QueueWaterTemperature, SemWaterTemperatureQueue);
-        if (adcWaterTemperature != ESP_FAIL) {
-            printf("T(w) %d\n", adcWaterTemperature);
-        }
-
-        vTaskDelay(500 / portTICK_PERIOD_MS);
+        vTaskDelay(1 * 1000 / portTICK_PERIOD_MS);
     }
 }

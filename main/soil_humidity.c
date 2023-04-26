@@ -16,17 +16,13 @@ SemaphoreHandle_t SemHumidityQueue = NULL;
  */
 void check_humidity (void *pvParameters) {
     int voltage;
-    int8_t converted_value;
-    QueueSoilHumidity = xQueueCreate( 3, sizeof( int ) );
+    int16_t converted_value;
+    QueueSoilHumidity = xQueueCreate( 2, sizeof( int16_t ) );
     SemHumidityQueue = xSemaphoreCreateMutex();
     while (1) {
         voltage = adc_read(ADC_CHANNEL_0);
-        converted_value = ((float)voltage / 3300) * 100;
-
-        xSemaphoreTake(SemHumidityQueue, portMAX_DELAY);
-        xQueueSend(QueueSoilHumidity, &converted_value, portMAX_DELAY);
-        xSemaphoreGive(SemHumidityQueue);
-
-        vTaskDelay(3 * 1000 / portTICK_PERIOD_MS);
+        converted_value = (voltage * 100) / 3300;
+        writeQueue(QueueSoilHumidity, SemHumidityQueue, &converted_value);
+        vTaskDelay(100 / portTICK_PERIOD_MS);
     }
 }

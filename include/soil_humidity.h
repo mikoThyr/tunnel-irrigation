@@ -10,6 +10,7 @@
 #include "esp_log.h"
 #include "driver/adc_types_legacy.h"
 #include "adc_config.h"
+#include "control.h"
 
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"

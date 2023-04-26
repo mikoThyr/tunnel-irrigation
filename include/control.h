@@ -29,6 +29,15 @@ extern TaskHandle_t task_DayTime;
 extern TaskHandle_t task_WaterLevel;
 extern TaskHandle_t task_Irrigation;
 
+extern SemaphoreHandle_t SemHumidityQueue;
+extern SemaphoreHandle_t SemWaterTemperatureQueue;
+extern SemaphoreHandle_t SemAirTemperatureQueue;
+extern SemaphoreHandle_t SemDayTimeQueue;
+
+esp_err_t readQueue (QueueHandle_t queue, SemaphoreHandle_t semaphore, int16_t *value);
+
+esp_err_t writeQueue (QueueHandle_t queue, SemaphoreHandle_t semaphore, int16_t *value);
+
 void control_task (void *pvParameters);
 
 #endif

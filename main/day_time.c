@@ -15,17 +15,30 @@ SemaphoreHandle_t SemDayTimeQueue = NULL;
  * @param
  */
 void check_daytime (void *pvParameters) {
-    uint8_t converted_value;
-    QueueDayTime = xQueueCreate(3, sizeof( int ));
+    int8_t user_day;
+    int16_t converted_value;
+    QueueDayTime = xQueueCreate(2, sizeof( int16_t ));
     SemDayTimeQueue = xSemaphoreCreateMutex();
-    while (1) {
-        int voltage = adc_read(ADC_CHANNEL_7);
-        converted_value = ((float)voltage / 3300) * 100;
 
-        xSemaphoreTake(SemDayTimeQueue, portMAX_DELAY);
-        xQueueSend(QueueDayTime, &converted_value, portMAX_DELAY);
-        xSemaphoreGive(SemDayTimeQueue);
-        vTaskDelay(3 * 1000 / portTICK_PERIOD_MS);
+    user_day = get_i8_variable("storDev", "time_day");
+
+    while (1) {
+        // The program have to check is it a day or not. If there is zero in the
+        // nvm memory the program can run the pump in the day and night so user_day
+        // will be equal 1.
+        if (user_day == 0) {
+            converted_value = 1;
+        } else {
+            int voltage = adc_read(ADC_CHANNEL_7);
+            converted_value = (voltage * 100) / 3300;
+            if (converted_value > 30) {
+                converted_value = 1;
+            } else {
+                converted_value = 0;
+            }
+        }
+        writeQueue(QueueDayTime, SemDayTimeQueue, &converted_value);
+        vTaskDelay(100 / portTICK_PERIOD_MS);
     }
 }
 

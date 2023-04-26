@@ -33,18 +33,16 @@ void configure_nvm (void) {
  */
 int8_t check_i8_variable (char namespace[], char key[], int8_t value, set_value_t flag) {
     esp_err_t err;
-
+    int8_t val = value;
     nvs_handle_t nvs_handle;
     err = nvs_open( namespace, NVS_READWRITE, &nvs_handle);
     if (err == ESP_OK) {
         err = nvs_get_i8(nvs_handle, key, &value);
-        printf("Check variable (get_i8): %s\n", esp_err_to_name(err));
         /* ESP_ERR_NVS_NOT_FOUND: if there is no key in the nvm */
         if ((err == ESP_ERR_NVS_NOT_FOUND) || (flag == SET)) {
-            err = nvs_set_i8(nvs_handle, key, value);
-            printf("Check variable (set_i8): %s\n", esp_err_to_name(err));
-            err = nvs_commit(nvs_handle);
-            printf("Check variable (commit): %s\n", esp_err_to_name(err));
+            nvs_set_i8(nvs_handle, key, val);
+            nvs_commit(nvs_handle);
+            value = val;
         }
     } else {
         printf("Check variable (open): %s\n", esp_err_to_name(err));
@@ -85,13 +83,10 @@ esp_err_t check_str_variable (const char* namespace, const char* key, char* valu
     err = nvs_open(namespace, NVS_READWRITE, &nvs_handle);
     if (err == ESP_OK) {
         err = nvs_get_str(nvs_handle, key, data, &value_len);
-        printf("Check variable (get_str): %s %s\n", esp_err_to_name(err), data);
         /* ESP_ERR_NVS_NOT_FOUND: if there is no key in the nvm */
         if ((err == ESP_ERR_NVS_NOT_FOUND) || (flag == SET)) {
-            err = nvs_set_str(nvs_handle, key, value);
-            printf("Check variable (set_str): %s\n", esp_err_to_name(err));
-            err = nvs_commit(nvs_handle);
-            printf("Check variable (commit): %s\n", esp_err_to_name(err));
+            ESP_ERROR_CHECK(nvs_set_str(nvs_handle, key, value));
+            ESP_ERROR_CHECK(nvs_commit(nvs_handle));
         }
     } else {
         printf("Check variable (open): %s\n", esp_err_to_name(err));
@@ -120,6 +115,12 @@ char* get_str_variable (const char *namespace, const char *key) {
     return value;
 }
 
+/**
+ * @brief
+ * @param
+ * @return  ESP_OK
+ *          ESP_FAIL
+ */
 esp_err_t write_nvm_data (char *namespace, char *key, char *value) {
     /* Zapisanie wartości pól do pamięci NVM */
     nvs_handle_t nvs_handle;
@@ -142,29 +143,38 @@ esp_err_t write_nvm_data (char *namespace, char *key, char *value) {
 }
 
 /**
- *  @brief
+ *  @brief Set default settings after first start.
  */
 void set_global_variables (void) {
+    /* Program mode: Normal */
     program_mode_t dev_mode;
-    dev_mode = check_i8_variable("storage", "mode", NORMAL, NO_SET);
+    dev_mode = check_i8_variable("storDev", "mode", (uint8_t)NORMAL, NO_SET);
     printf("Program mode (-1:ERROR, 0:NORMAL, 1:ECO): %d\n", dev_mode);
 
+    /* Time of day: Day */
     time_day_t day_flag;
-    day_flag = check_i8_variable("storage", "time_day", DAY, NO_SET);
+    day_flag = check_i8_variable("storDev", "time_day", (uint8_t)DAY, NO_SET);
     ulp_day_flag = day_flag;
     printf("Time of day (-1:ERROR, 0:DAY and NIGHT, 1:DAY): %d\n", day_flag);
 
+    /* Wifi: On, ssid: admin, pass: admin */
     wifi_flag_t dev_wifi;
-    dev_wifi = check_i8_variable("storage", "wifi", WIFI_ON, NO_SET);
+    dev_wifi = check_i8_variable("storWifi", "wifi", (uint8_t)WIFI_ON, NO_SET);
     printf("Wifi (-1:ERROR, 0:OFF, 1:ON): %d\n", dev_wifi);
-    check_str_variable("storage", "ssid", "SiecImperialna1", NO_SET);
-    check_str_variable("storage", "pass", "1mPer1UMm", NO_SET);
+    check_str_variable("storWifi", "ssid", "admin", NO_SET);
+    check_str_variable("storWifi", "pass", "admin", NO_SET);
 
+    /* Humidity lower level: 60 */
     uint8_t value;
-    value = check_i8_variable("storage", "hum_low", 60, NO_SET);
+    value = check_i8_variable("storDev", "hum_low", 60, NO_SET);
     printf("Humidity lower level: %d\n", value);
 
-    value = check_i8_variable("storage", "hum_high", 70, NO_SET);
+    /* Humidity upper level: 70 */
+    value = check_i8_variable("storDev", "hum_high", 70, NO_SET);
     printf("Humidity upper level: %d\n", value);
+
+    /* Temperature lower level to watering: 20 */
+    value = check_i8_variable("storDev", "temp", 20, NO_SET);
+    printf("Temperature to watering: %d\n", value);
 
 }

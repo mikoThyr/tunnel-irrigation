@@ -1,8 +1,5 @@
 #include "wifi.h"
 
-static esp_netif_t *netif_ap = NULL;
-static esp_netif_t *netif_sta = NULL;
-
 void wifi_ap_mode (void) {
 	wifi_config_t wifi_config = {
 		.ap = {
@@ -28,10 +25,10 @@ esp_err_t wifi_sta_mode ( void ) {
 
     wifi_config_t wifi_config = {};
 
-    value = get_str_variable ( "storage", "ssid" );
+    value = get_str_variable ( "storWifi", "ssid" );
     strcpy((char* )wifi_config.sta.ssid, value);
     free(value);
-    value = get_str_variable ( "storage", "pass" );
+    value = get_str_variable ( "storWifi", "pass" );
     strcpy((char* )wifi_config.sta.password, value);
     free(value);
 
@@ -57,6 +54,7 @@ static void event_handler (void* arg, esp_event_base_t event_base, int32_t event
 	if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_DISCONNECTED) {
 		esp_wifi_connect();
 		printf("Retry to connect to the AP\n");
+        vTaskDelay(3 * 1000 / portTICK_PERIOD_MS);
 	} else if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_WIFI_READY) {
         printf("WIFI_EVENT_WIFI_READY\n");
     }
@@ -66,10 +64,8 @@ void configure_wifi (void) {
 	ESP_ERROR_CHECK(esp_netif_init());
 	ESP_ERROR_CHECK(esp_event_loop_create_default());
 
-	netif_ap = esp_netif_create_default_wifi_ap();
-	assert(netif_ap);
-	netif_sta = esp_netif_create_default_wifi_sta();
-	assert(netif_sta);
+	esp_netif_create_default_wifi_ap();
+	esp_netif_create_default_wifi_sta();
 
 	wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
 	ESP_ERROR_CHECK(esp_wifi_init(&cfg));
@@ -103,6 +99,7 @@ esp_err_t start_wifi (wifi_mode_t set_mode) {
                     error_status = esp_wifi_sta_get_ap_info(&wifi_info);
                 }
 				wifi_ap_mode();
+                error_status = esp_wifi_start();
 			}
 			break;
 		case WIFI_MODE_AP:

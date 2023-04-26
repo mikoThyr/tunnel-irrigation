@@ -9,6 +9,7 @@
 #include "esp_err.h"
 #include "esp_log.h"
 #include "driver/adc_types_legacy.h"
+#include "math.h"
 
 #include "freertos/FreeRTOS.h"
 #include "freertos/queue.h"
@@ -16,6 +17,7 @@
 #include "freertos/task.h"
 
 #include "adc_config.h"
+#include "control.h"
 
 extern QueueHandle_t QueueAirTemperature;
 extern QueueHandle_t QueueWaterTemperature;

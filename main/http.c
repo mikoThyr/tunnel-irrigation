@@ -2,96 +2,339 @@
 
 static const char *TAG = "HTTP";
 
-typedef struct {
-	char ssid[32];
-    char pass[32];
-} user_data_t;
+esp_err_t set_handler (httpd_req_t *req) {
+    const char *response = "<html> \
+<head> \
+    <title>ESP32</title> \
+    <style type=\"text/css\"> \
+        body { \
+            background-color: #d1e7dd; \
+            margin: 0; \
+            padding: 0; \
+        } \
+        #header { \
+            background-color: #2c786c; \
+            height: 50px; \
+            padding: 10px; \
+        } \
+        #menu { \
+            background-color: #e0f3eb; \
+            height: 30px; \
+            padding: 5px; \
+        } \
+        #menu a { \
+            display: inline-block; \
+            margin-right: 10px; \
+            color: #2c786c; \
+            text-decoration: none; \
+        } \
+        #menu a:hover { \
+            text-decoration: underline; \
+        } \
+        #content { \
+            margin: 10px; \
+            padding: 10px; \
+            background-color: #ffffff; \
+        } \
+    </style> \
+</head> \
+<body> \
+    <div id=\"header\"> \
+        <h1>ESP32 Irrigation</h1> \
+    </div> \
+    <div id=\"menu\" style=\"display: flex; justify-content: space-between; align-items: center;\"> \
+    <div> \
+        <a href=\"/\">Device</a> \
+        <a href=\"/wifi\">Wifi</a> \
+    </div> \
+        <form action=\"/logout\" method=\"post\" style=\"padding: 10px 0; margin: 0;\"> \
+            <input type=\"submit\" value=\"Logout\" style=\"padding: 10px 20px; align-self: center;\"> \
+        </form> \
+    </div> \
+    <div id=\"content\"> \
+    <h1>Settings</h1> \
+    <form action=\"/end\" method=\"post\"> \
+        <fieldset style=\"background-color: #F5F5F5\"> \
+            <legend>Watering during:</legend> \
+            <label><input type=\"radio\" name=\"time_day\" value=\"day\">Day</label> \
+            <label><input type=\"radio\" name=\"time_day\" value=\"day_and_night\">Day and night</label> \
+        </fieldset> \
+        <br> \
+        <fieldset style=\"background-color: #F5F5F5\"> \
+            <legend>Run mode:</legend> \
+            <label><input type=\"radio\" name=\"mode\" value=\"normal\">Normal</label> \
+            <label><input type=\"radio\" name=\"mode\" value=\"eco\">Eco</label> \
+        </fieldset> \
+        <br> \
+        <fieldset style=\"background-color: #F5F5F5\"> \
+            <legend>Humidity:</legend> \
+            <label>Upper level of the soil humidity (ex 70):</label><br> \
+            <input type=\"number\" name=\"humlvlu\" style=\"display: inline-block;\"><br> \
+            <label>Lower level when watering will be run (ex 60):</label><br> \
+            <input type=\"number\" name=\"humlvld\" style=\"display: inline-block;\"> \
+        </fieldset> \
+        <br> \
+        <fieldset style=\"background-color: #F5F5F5\"> \
+            <legend>Temperature (ex 20):</legend> \
+            <label>Water temperature to watering plants:</label><br> \
+            <input type=\"number\" name=\"temp\" style=\"display: inline-block;\"><br> \
+        </fieldset> \
+        <br> \
+        <input type=\"submit\" value=\"Save\"> \
+    </form> \
+</div> \
+</body> \
+</html>";
+    httpd_resp_send(req, response, strlen(response));
+	return ESP_OK;
+}
 
-esp_err_t get_handler (httpd_req_t *req) {
-    httpd_resp_send(req, "<html>"
-	    "<head>"
-			"<title>ESP32</title>"
-			"<style type=\"text/css\">"
-				"body { background-color: #6591A8; }"
-			"</style>"
-		"</head>"
-		"<body>"
-			"<div class=\"outer\"><br><br>"
-			"<form action=\"/url\" method=\"post\">"
-				"<h3>Complete the fields below with the network ssid and password</h3><br><br>"
-				"<label for=\"ssid\">SSID:</label><br>"
-				"<input type=\"text\" id=\"ssid\" name=\"ssid\" required><br><br>"
-				"<label for=\"pass\">Password:</label><br>"
-				"<input type=\"password\" id=\"pass\" name=\"pass\" required><br>"
-				"<input type=\"submit\" value=\"Save\">"
-			"</form>"
-			"</div>"
-		"</body>"
-		"</html>", -1);
-
+esp_err_t wifi_handler (httpd_req_t *req) {
+    const char *response = "<html> \
+<head> \
+    <title>ESP32</title> \
+    <style type=\"text/css\"> \
+        body { \
+            background-color: #d1e7dd; \
+            margin: 0; \
+            padding: 0; \
+        } \
+        #header { \
+            background-color: #2c786c; \
+            height: 50px; \
+            padding: 10px; \
+        } \
+        #menu { \
+            background-color: #e0f3eb; \
+            height: 30px; \
+            padding: 5px; \
+        } \
+        #menu a { \
+            display: inline-block; \
+            margin-right: 10px; \
+            color: #2c786c; \
+            text-decoration: none; \
+        } \
+        #menu a:hover { \
+            text-decoration: underline; \
+        } \
+        #content { \
+            margin: 10px; \
+            padding: 10px; \
+            background-color: #ffffff; \
+        } \
+    </style> \
+</head> \
+<body> \
+    <div id=\"header\"> \
+        <h1>ESP32 Irrigation</h1> \
+    </div> \
+    <div id=\"menu\" style=\"display: flex; justify-content: space-between; align-items: center;\"> \
+    <div> \
+        <a href=\"/\">Device</a> \
+        <a href=\"/wifi\">Wifi</a> \
+    </div> \
+        <form action=\"/logout\" method=\"post\" style=\"padding: 10px 0; margin: 0;\"> \
+            <input type=\"submit\" value=\"Logout\" style=\"padding: 10px 20px; align-self: center;\"> \
+        </form> \
+    </div> \
+    <div id=\"content\"> \
+    <h1>Wifi</h1> \
+    <form action=\"/end\" method=\"post\"> \
+        <fieldset style=\"background-color: #F5F5F5\"> \
+            <legend>WiFi:</legend> \
+            <label><input type=\"radio\" name=\"wifi\" value=\"on\">On</label> \
+            <label><input type=\"radio\" name=\"wifi\" value=\"off\">Off</label> \
+            <br><br> \
+            <legend>SSID:</legend> \
+            <input type=\"text\" name=\"ssid\" style=\"display: inline-block;\"><br> \
+            <legend>Password:</legend> \
+            <input type=\"password\" name=\"pass\" style=\"display: inline-block;\"> \
+        </fieldset> \
+        <br> \
+        <input type=\"submit\" value=\"Save\"> \
+    </form> \
+</div> \
+</body> \
+</html>";
+    httpd_resp_send(req, response, strlen(response));
 	return ESP_OK;
 }
 
 esp_err_t post_handler (httpd_req_t *req) {
+    uint8_t value;
     char* saveptr;
     char* token;
-    user_data_t user_data;
-    char data[64];
-    memset(&user_data, 0, sizeof(user_data));
-    memset(&data, 0, sizeof(data));
-
+    char data[128];
+    data[0] = '\0';
     httpd_req_recv(req, data, sizeof(data));
-    data[strlen(data)] = '\0';
+    printf("%s\n", data);
     token = strtok_r(data, "&", &saveptr);
     while (token != NULL) {
-        if (strstr(token, "ssid=") == token) {
+        if (strstr(token, "wifi=") == token) {
+            char* val = token + strlen("wifi=");
+            if (strncmp(val, "on", strlen("on")) == 0) {
+                check_i8_variable("storWifi", "wifi", (uint8_t)WIFI_ON, SET);
+                printf("val: %s\n", val);
+            } else if (strncmp(val, "off", strlen("off")) == 0) {
+                check_i8_variable("storWifi", "wifi", (uint8_t)WIFI_OFF, SET);
+                printf("val: %s\n", val);
+            }
+        } else if (strstr(token, "ssid=") == token) {
             char* val = token + strlen("ssid=");
-            strncpy(user_data.ssid, val, sizeof(user_data.ssid) - 1);
+            if (strlen(val) != 0) {
+                write_nvm_data("storWifi", "ssid", val);
+            }
         } else if (strstr(token, "pass=") == token) {
             char* val = token + strlen("pass=");
-            strncpy(user_data.pass, val, sizeof(user_data.pass) - 1);
+            if (strlen(val) != 0) {
+                write_nvm_data("storWifi", "pass", val);
+            }
+        } else if (strstr(token, "time_day=") == token) {
+            char* val = token + strlen("time_day=");
+            if (strncmp(val, "day_and_night", strlen("day_and_night")) == 0) {
+                check_i8_variable("storDev", "time_day", (uint8_t)DAYNIGHT, SET);
+                printf("val: %s\n", val);
+            } else if (strncmp(val, "day", strlen("day")) == 0) {
+                check_i8_variable("storDev", "time_day", (uint8_t)DAY, SET);
+                printf("val: %s\n", val);
+            }
+        } else if (strstr(token, "mode=") == token) {
+            char* val = token + strlen("mode=");
+            if (strncmp(val, "normal", strlen("normal")) == 0) {
+                check_i8_variable("storDev", "mode", (uint8_t)NORMAL, SET);
+                printf("val: %s\n", val);
+            } else if (strncmp(val, "eco", strlen("eco")) == 0) {
+                check_i8_variable("storDev", "mode", (uint8_t)ECO, SET);
+                printf("val: %s\n", val);
+            }
+        } else if (strstr(token, "humlvlu=") == token) {
+            char* val = token + strlen("humlvlu=");
+            printf("strlen humlvlu: %d\n", strlen(val));
+            if (strlen(val) != 0) {
+                value = atoi(val);
+                check_i8_variable("storDev", "hum_high", (int8_t)value, SET);
+            }
+        } else if (strstr(token, "humlvld=") == token) {
+            char* val = token + strlen("humlvld=");
+            if (strlen(val) != 0) {
+                value = atoi(val);
+                check_i8_variable("storDev", "hum_low", (int8_t)value, SET);
+            }
+        } else if (strstr(token, "temp=") == token) {
+            char* val = token + strlen("temp=");
+            if ((strlen(val) != 0) && (isdigit((int)val[0]) != 0)) {
+                value = atoi(val);
+                check_i8_variable("storDev", "temp", (int8_t)value, SET);
+            }
         }
-
         token = strtok_r(NULL, "&", &saveptr);
     }
-    httpd_resp_send(req, "<html>"
-	    "<head>"
-		    "<title>ESP32</title>"
-			    "<style type=\"text/css\">"
-				    "body { background-color: #6591A8; }"
-			    "</style>"
-		    "</head>"
-	    	"<body>"
-			    "<h3>OK.</h3>"
-		    "</body>"
-		    "</html>", -1);
-
-    write_nvm_data("storage", "ssid", user_data.ssid);
-    write_nvm_data("storage", "pass", user_data.pass);
+    const char *response = "<html> \
+<head> \
+    <title>ESP32</title> \
+    <style type=\"text/css\"> \
+        body { \
+            background-color: #d1e7dd; \
+            margin: 0; \
+            padding: 0; \
+        } \
+        #header { \
+            background-color: #2c786c; \
+            height: 50px; \
+            padding: 10px; \
+        } \
+        #menu { \
+            background-color: #e0f3eb; \
+            height: 30px; \
+            padding: 5px; \
+        } \
+        #menu a { \
+            display: inline-block; \
+            margin-right: 10px; \
+            color: #2c786c; \
+            text-decoration: none; \
+        } \
+        #menu a:hover { \
+            text-decoration: underline; \
+        } \
+        #content { \
+            margin: 10px; \
+            padding: 10px; \
+            background-color: #ffffff; \
+        } \
+    </style> \
+</head> \
+<body> \
+    <div id=\"header\"> \
+        <h1>ESP32 Irrigation</h1> \
+    </div> \
+    <div id=\"menu\" style=\"display: flex; justify-content: space-between; align-items: center;\"> \
+    <div> \
+        <a href=\"/\">Device</a> \
+        <a href=\"/wifi\">Wifi</a> \
+    </div> \
+        <form action=\"/logout\" method=\"post\" style=\"padding: 10px 0; margin: 0;\"> \
+            <input type=\"submit\" value=\"Logout\" style=\"padding: 10px 20px; align-self: center;\"> \
+        </form> \
+    </div> \
+    <div id=\"content\"> \
+    <h1>Your changes will be set after wifi disconnect.</h1> \
+    </div> \
+</body> \
+</html>";
+    httpd_resp_send(req, response, strlen(response));
 	return ESP_OK;
 }
 
-httpd_uri_t uri_get = {
-	.uri = "/uri",
+esp_err_t logout_handler (httpd_req_t *req) {
+
+    esp_wifi_stop();
+    // esp_restart();
+    return ESP_OK;
+}
+
+httpd_uri_t set_get = {
+	.uri = "/",
 	.method = HTTP_GET,
-	.handler = get_handler,
+	.handler = set_handler,
 	.user_ctx = NULL
 };
 
-httpd_uri_t uri_post = {
-	.uri       = "/url",
+httpd_uri_t wifi_get = {
+	.uri = "/wifi",
+	.method = HTTP_GET,
+	.handler = wifi_handler,
+	.user_ctx = NULL
+};
+
+httpd_uri_t end_post = {
+	.uri       = "/end",
 	.method    = HTTP_POST,
 	.handler   = post_handler,
 	.user_ctx  = NULL
 };
 
+httpd_uri_t logout_post = {
+	.uri       = "/logout",
+	.method    = HTTP_POST,
+	.handler   = logout_handler,
+	.user_ctx  = NULL
+};
+
 httpd_handle_t start_webserver (void) {
-	httpd_config_t config = HTTPD_DEFAULT_CONFIG();
+	esp_err_t error_status;
+    httpd_config_t config = HTTPD_DEFAULT_CONFIG();
 	httpd_handle_t server = NULL;
-	if (httpd_start(&server, &config) == ESP_OK) {
-		httpd_register_uri_handler(server, &uri_get);
-		httpd_register_uri_handler(server, &uri_post);
-	}
+    error_status = httpd_start(&server, &config);
+	if (error_status == ESP_OK) {
+        httpd_register_uri_handler(server, &set_get);
+		httpd_register_uri_handler(server, &end_post);
+        httpd_register_uri_handler(server, &wifi_get);
+        httpd_register_uri_handler(server, &logout_post);
+	} else {
+        printf("Start httpd: %s\n", esp_err_to_name(error_status));
+    }
 	return server;
 }
 

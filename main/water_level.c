@@ -12,6 +12,6 @@ void check_water (void *pvParameters) {
     gpio_config(&io_water_config);
     while (1) {
 
-        vTaskDelay(100 / portTICK_PERIOD_MS);
+        vTaskDelay(500 / portTICK_PERIOD_MS);
     }
 }

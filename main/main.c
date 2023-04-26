@@ -40,7 +40,7 @@
 // #define ADC_REF              GPIO_NUM_32     RTC_GPIO05  ADC1_CH4
 // #define PIN_PUMP1_IRRIGATION GPIO_NUM_25     RTC_GPIO06
 // #define PIN_WATERLEVEL       GPIO_NUM_26     RTC_GPIO07
-// #define PIN_AP_MODE          GPIO_NUM_27
+// #define PIN_AP_MODE          GPIO_NUM_27     RTC_GPIO17
 
 extern const uint8_t ulp_main_bin_start[] asm("_binary_ulp_main_bin_start");
 extern const uint8_t ulp_main_bin_end[]   asm("_binary_ulp_main_bin_end");
@@ -54,6 +54,7 @@ TaskHandle_t task_WaterLevel;
 TaskHandle_t task_ButtonRunAP;
 TaskHandle_t task_Irrigation;
 
+void run_set_task (void);
 void run_tasks (void);
 void run_ulp (void);
 
@@ -62,15 +63,20 @@ void app_main (void) {
     esp_err_t error_status;
     int8_t device_mode;
     int8_t wifi_status;
+    adc_init();
     configure_nvm();
     set_global_variables();
 
-    /*  A ECO mode has not yet been programmed so function set_global_variables
+    /* A ECO mode has not yet been programmed so function set_global_variables
         after first device start run program in default. */
-    device_mode = get_i8_variable("storage", "mode");
-    if (device_mode == NORMAL) {
+    device_mode = get_i8_variable("storDev", "mode");
+    if ((device_mode == NORMAL) || ((ulp_run_settings & UINT16_MAX) == 1)) {
         configure_wifi();
-        wifi_status = get_i8_variable("storage", "wifi");
+        if ((ulp_run_settings & UINT16_MAX) == 1) {
+            gpio_intr_enable(PIN_AP_MODE);
+            ulp_run_settings = 0;
+        }
+        wifi_status = get_i8_variable("storWifi", "wifi");
         if (wifi_status == WIFI_ON) {
             error_status = start_wifi(WIFI_MODE_STA);
             if (error_status == ESP_OK) {
@@ -78,37 +84,44 @@ void app_main (void) {
                 printf("Start HTTP.\n");
             }
         }
+        run_set_task();
         run_tasks();
-    } else if (device_mode == ECO) {
+    } else if ((device_mode == ECO) && ((ulp_run_settings & UINT16_MAX) != 1)) {
+        rtc_gpio_init(PIN_AP_MODE);
+        rtc_gpio_pulldown_en(PIN_AP_MODE);
+        rtc_gpio_set_direction(PIN_AP_MODE, RTC_GPIO_MODE_INPUT_ONLY);
+
         run_ulp();
     } else {
-        printf("Mode status: %d\n", device_mode);
+        printf("Can't choose a mode.\n");
     }
 }
 
 void run_tasks (void) {
-    xTaskCreatePinnedToCore(control_task, "The one to control others.", 4096, NULL, 2, &task_Control, 1);
-    xTaskCreatePinnedToCore(check_humidity, "Check humidity of the soil.", 1024, NULL, 1, &task_SoilHumidity, 1);
+    xTaskCreatePinnedToCore(check_humidity, "Check humidity of the soil.", 2048, NULL, 1, &task_SoilHumidity, 1);
     xTaskCreatePinnedToCore(check_airtemperature, "Check temperature of the air.", 2048, NULL, 1, &task_AirTemperature, 1);
     xTaskCreatePinnedToCore(check_watertemperature, "Check temperature of the water.", 2048, NULL, 1, &task_WaterTemperature, 1);
-    xTaskCreatePinnedToCore(check_daytime, "Check time of day.", 1024, NULL, 1, &task_DayTime, 1);
+    xTaskCreatePinnedToCore(check_daytime, "Check time of day.", 2048, NULL, 1, &task_DayTime, 1);
     xTaskCreatePinnedToCore(check_water, "Check water level.", 2048, NULL, 1, &task_WaterLevel, 1);
-    xTaskCreate(button_run_ap, "Run wifi in ap mode.", 2048, NULL, 5, &task_ButtonRunAP);
     xTaskCreatePinnedToCore(irrigation, "Run soil wattering.", 2048, NULL, 1, &task_Irrigation, 1);
-    xTaskCreate(vTaskIdle, "Idle", configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY, NULL);
+    xTaskCreatePinnedToCore(control_task, "The one to control others.", 4096, NULL, 1, &task_Control, 1);
+    xTaskCreatePinnedToCore(vTaskIdle, "Idle", configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY, NULL, 1);
+}
+
+void run_set_task (void) {
+    xTaskCreate(button_run_ap, "Run wifi in ap mode.", 4096, NULL, 5, &task_ButtonRunAP);
 }
 
 void run_ulp (void) {
     esp_sleep_wakeup_cause_t cause = esp_sleep_get_wakeup_cause();
-    if (cause != ESP_SLEEP_WAKEUP_TIMER) { // ESP_SLEEP_WAKEUP_ULP) {
+    if (cause != ESP_SLEEP_WAKEUP_ULP) {
         ulp_load_binary(0, ulp_main_bin_start, (ulp_main_bin_end - ulp_main_bin_start) / sizeof(uint32_t));
         printf("ULP-coprocessor\n");
     } else {
         printf("ulp_day_flag: %d\n", ulp_day_flag & UINT16_MAX);
-        vTaskDelay(5 * 1000 / portTICK_PERIOD_MS);
     }
     ulp_run(&ulp_entry - RTC_SLOW_MEM);
-    esp_sleep_enable_timer_wakeup(10 * 1000 * 1000);
-    // esp_sleep_enable_ulp_wakeup();
+    // esp_sleep_enable_timer_wakeup(10 * 1000 * 1000);
+    esp_sleep_enable_ulp_wakeup();
     esp_deep_sleep_start();
 }
