@@ -1,6 +1,9 @@
 /**
- * @file temperature.h
- * @brief The task to check the value of the water and air.
+ * @file day_time.c
+ * @brief   The task to check the time of day. The one of the options is either
+ *          watering during the day or during the day and night. The Task
+ *          checks the time of the day and indicate that by sending to the
+ *          queue either 1 or 0.
  */
 #include "day_time.h"
 
@@ -10,13 +13,14 @@ QueueHandle_t QueueDayTime;
 SemaphoreHandle_t SemDayTimeQueue = NULL;
 
 /**
- * @brief Function to check soil humidity. Capacitive sensor is connected to the
- *      mictrocontrller pin which measure the value by ADC.
- * @param
+ * @brief Task to check the time of day.
  */
 void check_daytime (void *pvParameters) {
     int8_t user_day;
     int16_t converted_value;
+    uint32_t voltage;
+    uint32_t voltage_ref;
+
     QueueDayTime = xQueueCreate(2, sizeof( int16_t ));
     SemDayTimeQueue = xSemaphoreCreateMutex();
 
@@ -29,8 +33,10 @@ void check_daytime (void *pvParameters) {
         if (user_day == 0) {
             converted_value = 1;
         } else {
-            int voltage = adc_read(ADC_CHANNEL_7);
-            converted_value = (voltage * 100) / 3300;
+            voltage = adc_read(ADC_CHANNEL_7);
+            voltage_ref = adc_read(ADC_CHANNEL_4);
+
+            converted_value = (voltage * 100) / voltage_ref;
             if (converted_value > 30) {
                 converted_value = 1;
             } else {

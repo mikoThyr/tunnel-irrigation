@@ -1,5 +1,12 @@
+/**
+ * @file wifi.c
+ * @brief
+ */
 #include "wifi.h"
 
+/**
+ *  @brief  Features to set access point config.
+ */
 void wifi_ap_mode (void) {
 	wifi_config_t wifi_config = {
 		.ap = {
@@ -19,12 +26,16 @@ void wifi_ap_mode (void) {
 	ESP_ERROR_CHECK(esp_wifi_set_config(ESP_IF_WIFI_AP, &wifi_config));
 }
 
+/**
+ *  @brief  Features to set station config.
+ *  @return
+ */
 esp_err_t wifi_sta_mode ( void ) {
     esp_err_t error_status;
     char *value;
 
     wifi_config_t wifi_config = {};
-
+    // Read password and ssid of the wifi from nvm.
     value = get_str_variable ( "storWifi", "ssid" );
     strcpy((char* )wifi_config.sta.ssid, value);
     free(value);
@@ -50,6 +61,9 @@ esp_err_t wifi_sta_mode ( void ) {
     return error_status;
 }
 
+/**
+ *  @brief  Event to retry wifi connection if it will be lose.
+ */
 static void event_handler (void* arg, esp_event_base_t event_base, int32_t event_id, void* event_data) {
 	if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_DISCONNECTED) {
 		esp_wifi_connect();
@@ -60,6 +74,9 @@ static void event_handler (void* arg, esp_event_base_t event_base, int32_t event
     }
 }
 
+/**
+ *  @brief  Wifi configuration to use acces point and station modes.
+ */
 void configure_wifi (void) {
 	ESP_ERROR_CHECK(esp_netif_init());
 	ESP_ERROR_CHECK(esp_event_loop_create_default());
@@ -77,6 +94,9 @@ void configure_wifi (void) {
 	ESP_ERROR_CHECK(esp_event_handler_instance_register(WIFI_EVENT, ESP_EVENT_ANY_ID, &event_handler, NULL, &instance_id));
 }
 
+/**
+ *  @brief
+ */
 esp_err_t start_wifi (wifi_mode_t set_mode) {
 	esp_err_t error_status;
     wifi_mode_t current_mode;

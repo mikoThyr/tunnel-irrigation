@@ -33,7 +33,7 @@
 #include "ap_mode.h"
 #include "irrigation.h"
 
-// #define ADC_HUMMIDITY        GPIO_NUM_36     RTC_GPIO00  ADC1_CH0
+// #define ADC_HUMIDITY         GPIO_NUM_36     RTC_GPIO00  ADC1_CH0
 // #define ADC_AIRTEMP          GPIO_NUM_39     RTC_GPIO03  ADC1_CH3
 // #define ADC_WATERTEMP        GPIO_NUM_34     RTC_GPIO04  ADC1_CH6
 // #define ADC_DAYTIME          GPIO_NUM_35     RTC_GPIO05  ADC1_CH7
@@ -67,15 +67,16 @@ void app_main (void) {
     configure_nvm();
     set_global_variables();
 
-    /* A ECO mode has not yet been programmed so function set_global_variables
-        after first device start run program in default. */
+    // The eco mode is no ready yet.
     device_mode = get_i8_variable("storDev", "mode");
+    // ulp_run_settings indicate taht the button was ushed in the deep sleep.
     if ((device_mode == NORMAL) || ((ulp_run_settings & UINT16_MAX) == 1)) {
         configure_wifi();
         if ((ulp_run_settings & UINT16_MAX) == 1) {
             gpio_intr_enable(PIN_AP_MODE);
             ulp_run_settings = 0;
         }
+        // Read and set wifi status.
         wifi_status = get_i8_variable("storWifi", "wifi");
         if (wifi_status == WIFI_ON) {
             error_status = start_wifi(WIFI_MODE_STA);
@@ -105,7 +106,7 @@ void run_tasks (void) {
     xTaskCreatePinnedToCore(check_water, "Check water level.", 2048, NULL, 1, &task_WaterLevel, 1);
     xTaskCreatePinnedToCore(irrigation, "Run soil wattering.", 2048, NULL, 1, &task_Irrigation, 1);
     xTaskCreatePinnedToCore(control_task, "The one to control others.", 4096, NULL, 1, &task_Control, 1);
-    xTaskCreatePinnedToCore(vTaskIdle, "Idle", configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY, NULL, 1);
+    xTaskCreate(vTaskIdle, "Idle", configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY, NULL);
 }
 
 void run_set_task (void) {
@@ -117,11 +118,8 @@ void run_ulp (void) {
     if (cause != ESP_SLEEP_WAKEUP_ULP) {
         ulp_load_binary(0, ulp_main_bin_start, (ulp_main_bin_end - ulp_main_bin_start) / sizeof(uint32_t));
         printf("ULP-coprocessor\n");
-    } else {
-        printf("ulp_day_flag: %d\n", ulp_day_flag & UINT16_MAX);
     }
     ulp_run(&ulp_entry - RTC_SLOW_MEM);
-    // esp_sleep_enable_timer_wakeup(10 * 1000 * 1000);
     esp_sleep_enable_ulp_wakeup();
     esp_deep_sleep_start();
 }

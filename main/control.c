@@ -7,10 +7,14 @@
 #include "control.h"
 
 /**
- * @brief Take the voltage value from soil humidity queue.
- * @return int adcValue: -1: if no queue the value will be equel -1.
- *                       >=0: if there is value in the queue, the adcValue
- *                          variable is equel of this value.
+ * @brief   Take the voltage value from queue.
+ * @param   queue       Handle to a queue
+ *          semaphore   Handle to a semaphore
+ *          value       Pointer to a variable where will be sotre a value from
+ *                      queue.
+ * @return  ESP_OK      If queue isn't empty, semapthore was created and
+ *                      semaphore is ready to take.
+ *          ESP_FAIL
  */
 esp_err_t readQueue (QueueHandle_t queue, SemaphoreHandle_t semaphore, int16_t *value) {
     /* Check if there is any value in the queue. */
@@ -29,16 +33,31 @@ esp_err_t readQueue (QueueHandle_t queue, SemaphoreHandle_t semaphore, int16_t *
     }
 }
 
+/**
+ * @brief   Write the voltage value to the queue. Function checks the free
+ *          space in the queue and removes the oldest value if queue is full.
+ *          New value is added to the front of the queue.
+ * @param   queue       Handle to a queue
+ *          semaphore   Handle to a semaphore
+ *          value       Pointer to a variable which will be written to the
+ *                      queue.
+ * @return  ESP_OK      If semapthore was created and it is ready to use.
+ *          ESP_FAIL
+ */
 esp_err_t writeQueue (QueueHandle_t queue, SemaphoreHandle_t semaphore, int16_t *value) {
     int16_t null_value;
-    if (xSemaphoreTake(semaphore, (100/portTICK_PERIOD_MS)) == pdTRUE) {
-        if (uxQueueSpacesAvailable(queue) != 0) {
-            xQueueReceive(queue, &null_value, (100/portTICK_PERIOD_MS));
-            xQueueSendToFront(queue, value, (100/portTICK_PERIOD_MS));
-            xSemaphoreGive(semaphore);
-            // printf("SEND: %d\n", *value);
+    if (semaphore != NULL) {
+        if (xSemaphoreTake(semaphore, (100/portTICK_PERIOD_MS)) == pdTRUE) {
+            if (uxQueueSpacesAvailable(queue) != 0) {
+                xQueueReceive(queue, &null_value, (100/portTICK_PERIOD_MS));
+                xQueueSendToFront(queue, value, (100/portTICK_PERIOD_MS));
+                xSemaphoreGive(semaphore);
+                // printf("SEND: %d\n", *value);
+            }
+            return ESP_OK;
+        } else {
+            return ESP_FAIL;
         }
-        return ESP_OK;
     } else {
         return ESP_FAIL;
     }
@@ -54,18 +73,25 @@ void control_task (void *pvParameters) {
     int16_t adcHumidity = 0;             /*ADC value from queue*/
     int16_t adcWaterTemperature = 0;     /*ADC value from queue*/
     int16_t adcDayTime = 0;              /*ADC value from queue*/
+    int16_t adcAirTemperature = 0;
     int8_t user_temp;
     int8_t user_lowhumidity;
 
+    // Take data from the user configuration
     user_lowhumidity = get_i8_variable("storDev", "hum_low");
     user_temp = get_i8_variable("storDev", "temp");
 
     while (1) {
+        // Take from the queue the actual measurements.
         readQueue(QueueWaterTemperature, SemWaterTemperatureQueue, &adcWaterTemperature);
         readQueue(QueueSoilHumidity, SemHumidityQueue, &adcHumidity);
         readQueue(QueueDayTime, SemDayTimeQueue, &adcDayTime);
+        readQueue(QueueAirTemperature, SemAirTemperatureQueue, &adcAirTemperature);
+
+        // Check if taken values are free of the bugs.
         if ((adcWaterTemperature != -1) && (adcHumidity != -1) && (adcDayTime != -1)) {
-            printf("Water %d | Humidity %d | Day %d\n", adcWaterTemperature, adcHumidity, adcDayTime);
+            printf("Air %d | Water %d | Humidity %d | Day %d\n", adcAirTemperature, adcWaterTemperature, adcHumidity, adcDayTime);
+            // Check actual measurements and run pump.
             if ((adcWaterTemperature >= user_temp) && (adcHumidity <= user_lowhumidity) && adcDayTime) {
                 xTaskNotify(task_Irrigation, 0, eNoAction);
             }

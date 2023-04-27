@@ -10,18 +10,20 @@ SemaphoreHandle_t SemHumidityQueue = NULL;
 // #define ADC_HUMMIDITY        GPIO_NUM_36     RTC_GPIO00  ADC1_CH0
 
 /**
- * @brief Function to check soil humidity. Capacitive sensor is connected to the
- *      mictrocontrller pin which measure the value by ADC.
- * @param
+ * @brief Task to check the soil humidity by adc.
  */
 void check_humidity (void *pvParameters) {
-    int voltage;
+    uint32_t voltage;
     int16_t converted_value;
+    uint32_t voltage_ref;
+
     QueueSoilHumidity = xQueueCreate( 2, sizeof( int16_t ) );
     SemHumidityQueue = xSemaphoreCreateMutex();
     while (1) {
         voltage = adc_read(ADC_CHANNEL_0);
-        converted_value = (voltage * 100) / 3300;
+        voltage_ref = adc_read(ADC_CHANNEL_4);
+
+        converted_value = (voltage * 100) / voltage_ref;
         writeQueue(QueueSoilHumidity, SemHumidityQueue, &converted_value);
         vTaskDelay(100 / portTICK_PERIOD_MS);
     }

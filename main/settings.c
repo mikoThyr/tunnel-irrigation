@@ -4,6 +4,9 @@
  */
 #include "settings.h"
 
+/**
+ * @brief
+ */
 void configure_nvm (void) {
 	esp_err_t ret = nvs_flash_init();
 	if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
@@ -75,6 +78,11 @@ int8_t get_i8_variable (char namespace[], char key[]) {
     return value;
 }
 
+/**
+ * @brief
+ * @param
+ * @return
+ */
 esp_err_t check_str_variable (const char* namespace, const char* key, char* value, set_value_t flag) {
     esp_err_t err;
     nvs_handle_t nvs_handle;
@@ -96,6 +104,11 @@ esp_err_t check_str_variable (const char* namespace, const char* key, char* valu
     return err;
 }
 
+/**
+ * @brief
+ * @param
+ * @return
+ */
 char* get_str_variable (const char *namespace, const char *key) {
     nvs_handle_t nvs_handle;
     char data[64] = {0};
@@ -116,8 +129,10 @@ char* get_str_variable (const char *namespace, const char *key) {
 }
 
 /**
- * @brief
- * @param
+ * @brief   Function to save string to the nvm.
+ * @param   namespace   string to the namespace in the nvm.
+ *          key         string to the key in the nvm.
+ *          value       string value which will be store in the nvm.
  * @return  ESP_OK
  *          ESP_FAIL
  */
@@ -143,7 +158,9 @@ esp_err_t write_nvm_data (char *namespace, char *key, char *value) {
 }
 
 /**
- *  @brief Set default settings after first start.
+ *  @brief  Set default settings after first start. The values are stored in the
+ *          nvm memory. So after lack of the power the settings are safe and
+ *          ready to read.
  */
 void set_global_variables (void) {
     /* Program mode: Normal */

@@ -187,7 +187,7 @@ esp_err_t post_handler (httpd_req_t *req) {
             }
         } else if (strstr(token, "pass=") == token) {
             char* val = token + strlen("pass=");
-            if (strlen(val) != 0) {
+            if ((strlen(val) != 0) && (isascii((int)val[0]) != 0)) {
                 write_nvm_data("storWifi", "pass", val);
             }
         } else if (strstr(token, "time_day=") == token) {
@@ -290,7 +290,6 @@ esp_err_t post_handler (httpd_req_t *req) {
 esp_err_t logout_handler (httpd_req_t *req) {
 
     esp_wifi_stop();
-    // esp_restart();
     return ESP_OK;
 }
 
