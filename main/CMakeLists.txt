@@ -11,6 +11,7 @@ idf_component_register(SRCS "main.c"
                             "day_time.c"
                             "ap_mode.c"
                             "irrigation.c"
+                            "pwm.c"
                     SRC_DIRS "ulp"
                     INCLUDE_DIRS "../include"
                     REQUIRES esp32-owb

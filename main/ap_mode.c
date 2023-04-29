@@ -1,6 +1,6 @@
 /**
  *  @file ap_mode.c
- *  @brief  ISR which run task to run the httpd server.
+ *  @brief  ISR which run task with the httpd server.
  */
 #include "ap_mode.h"
 
@@ -13,7 +13,8 @@ gpio_config_t io_wifi_button = {
 };
 
 /**
- * @brief
+ * @brief   ISR with xTaskNotifyFromISR which allow the button_run_ap task
+ *          start webserver.
  */
 void IRAM_ATTR button_interrupt_handler (void *arg) {
     BaseType_t xHigherPriorityTaskWoken = pdFALSE;

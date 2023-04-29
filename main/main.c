@@ -32,6 +32,7 @@
 #include "http.h"
 #include "ap_mode.h"
 #include "irrigation.h"
+#include "pwm.h"
 
 // #define ADC_HUMIDITY         GPIO_NUM_36     RTC_GPIO00  ADC1_CH0
 // #define ADC_AIRTEMP          GPIO_NUM_39     RTC_GPIO03  ADC1_CH3
@@ -66,6 +67,8 @@ void app_main (void) {
     adc_init();
     configure_nvm();
     set_global_variables();
+
+    pwm_init();
 
     // The eco mode is no ready yet.
     device_mode = get_i8_variable("storDev", "mode");

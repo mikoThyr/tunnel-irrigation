@@ -1,11 +1,12 @@
 /**
  *  @files settings.c
- *  @brief
+ *  @brief  Functions to read and write user values (strings or integers)
+ *          in the nvm.
  */
 #include "settings.h"
 
 /**
- * @brief
+ * @brief   NVM initialization.
  */
 void configure_nvm (void) {
 	esp_err_t ret = nvs_flash_init();
@@ -57,9 +58,10 @@ int8_t check_i8_variable (char namespace[], char key[], int8_t value, set_value_
 }
 
 /**
- *  @brief
- *  @param
- *  @return
+ *  @brief  Read i8 value from nvm.
+ *  @param  namespace   namespace from nvm.
+ *          key         key from nvm.
+ *  @return value       value from nvm
  */
 int8_t get_i8_variable (char namespace[], char key[]) {
     esp_err_t err;
@@ -79,9 +81,20 @@ int8_t get_i8_variable (char namespace[], char key[]) {
 }
 
 /**
- * @brief
- * @param
- * @return
+ *  @brief  Function to read and write string from/ to non-volatile memory.
+ *          A "flag" argument can be set to: SET or NO_SET.
+ *          If SET the "value" argument will be set. Despite NO_SET the "value"
+ *          argument will be set if there is no nvm key in the memory (otherwise
+ *          it will be skipped).
+ *  @param  char namespace: namespace in the nvm
+ *          char key        key in the nvm
+ *          char* value     string which will be set if there is no value
+ *                          in the memory or flag is SET.
+ *          set_value_t flag enum with two options: SET and NO_SET.
+ *                          If SET then value will be changed in the int8_t value.
+ *                          The value in the memory can be empty so despite NO_SET
+ *                          the value will be changed in the char*.
+ *  @return err
  */
 esp_err_t check_str_variable (const char* namespace, const char* key, char* value, set_value_t flag) {
     esp_err_t err;
@@ -105,9 +118,10 @@ esp_err_t check_str_variable (const char* namespace, const char* key, char* valu
 }
 
 /**
- * @brief
- * @param
- * @return
+ *  @brief  Read string from nvm.
+ *  @param  namespace   namespace from nvm.
+ *          key         key from nvm.
+ *  @return value       value from nvm
  */
 char* get_str_variable (const char *namespace, const char *key) {
     nvs_handle_t nvs_handle;

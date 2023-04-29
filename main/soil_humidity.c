@@ -1,6 +1,6 @@
 /**
  * @file soil_humidity.c
- * @brief The task and function to check humidity of soil by ADC measurement.
+ * @brief The task to check humidity of soil by ADC measurement.
  */
 #include "soil_humidity.h"
 

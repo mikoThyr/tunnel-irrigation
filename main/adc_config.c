@@ -1,3 +1,7 @@
+/**
+ *  @file   adc_config.c
+ *  @brief  Initialization of the adc and function to read data by ADC.
+ */
 #include "adc_config.h"
 #include "esp_err.h"
 
@@ -20,7 +24,9 @@ adc_cali_line_fitting_config_t cali_config = {
     .bitwidth = ADC_BITWIDTH_DEFAULT,
 };
 
-
+/**
+ *  @brief  Initialization of the ADC.
+ */
 void adc_init (void) {
     ESP_ERROR_CHECK_WITHOUT_ABORT(adc_oneshot_new_unit(&init_config1, &adc1_handle));
     ESP_ERROR_CHECK_WITHOUT_ABORT(adc_cali_create_scheme_line_fitting(&cali_config, &adc1_cali_handle));
@@ -31,6 +37,11 @@ void adc_init (void) {
     ESP_ERROR_CHECK_WITHOUT_ABORT(adc_oneshot_config_channel(adc1_handle, ADC_CHANNEL_4, &config));
 }
 
+/**
+ *  @brief  Read value by ADC.
+ *  @param  channel     ADC_CHANNEL_X
+ *  @return voltage     The adc value readed and converted in the readable.
+ */
 int adc_read (adc_channel_t channel) {
     int adc_raw = 0;
     int voltage = 0;

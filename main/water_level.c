@@ -1,3 +1,7 @@
+/**
+ *  @file   Features to check the water level in the tank and indicate if the
+ *          level is to low.
+ */
 #include "water_level.h"
 
 gpio_config_t io_water_config = {

@@ -1,13 +1,14 @@
 /**
  * @file temperature.c
- * @brief The task to check the value of the water and air.
+ * @brief   The task to check the value of the water and air temperature by ADC.
+ *          The measured values by ADC are sending to the queue.
  */
 #include "temperature.h"
 #include "math.h"
 
-#define R25     10000
-#define R50     4100
-#define R100    1000
+#define R25     10000   /**< Resistance [Ohm] of the termistor in the 25 [C] */
+#define R50     4100    /**< Resistance [Ohm] of the termistor in the 50 [C] */
+#define R100    1000    /**< Resistance [Ohm] of the termistor in the 100 [C] */
 #define K0      273.15
 
 QueueHandle_t QueueAirTemperature;
