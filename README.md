@@ -1,11 +1,12 @@
-# Automation for watering the garden plants
+# Automation for watering the garden plants (project in progress)
 
 ## Description
 
-*Automated process for watering garden plants at a particular time or if the soil humidity is too low. The device can work in two modes: the first is "normal," where the WiFi connection can be set up to gather data on the server, and the second is "eco," which can be used to decrease power consumption.*\n
-*The system requires an external tank for watering plants. The water level can be controlled automatically and filled by a pump (an order is sent by RF433). The temperature is also checked, as it could cause thermal shock for plants if it will be too cold.*
-*Due to the louder noise of the pumps, they can be turned off during the night.*\n
-*Users can configure the upper and lower levels of humidity at which watering will start and stop, as well as the temperature of the water in the tank.*
+*Automated process for watering garden plants at a particular time or if the soil humidity is too low. The device can work in two modes either "normal" or "eco". The first one can be use to communicate by rf433 with external device to gather data and seccond if there is need to decrase power consumption.*
+*The system requires an external tank where the water is filled automatically. The pump is controlled by an rf433 to decrase the amount of wires. Also the temperature of the water is checked before irrigation to prevent thermal shock for the plants in case it is to cold.*
+*Users can configure the upper and lower levels of humidity at which watering will start and stop, as well as the temperature of the water in the tank. The pump start can be set to watering only during the day to eliminate loud.*
+
+## Work progress
 
 *Already done:*
 - "Normal" mode
@@ -20,5 +21,7 @@
 - "Eco" mode
 - Filling the tank
 - Checking the water level in the tank
+- RF433 gathering data
+- RF433 pump control
 
 
