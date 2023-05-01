@@ -72,7 +72,6 @@ esp_err_t writeQueue (QueueHandle_t queue, SemaphoreHandle_t semaphore, int16_t 
 void control_task (void *pvParameters) {
     int16_t adcHumidity = 0;             /*ADC value from queue*/
     int16_t adcWaterTemperature = 0;     /*ADC value from queue*/
-    int16_t adcDayTime = 0;              /*ADC value from queue*/
     int16_t adcAirTemperature = 0;
     int8_t user_temp;
     int8_t user_lowhumidity;
@@ -82,20 +81,21 @@ void control_task (void *pvParameters) {
     user_temp = get_i8_variable("storDev", "temp");
 
     while (1) {
+        xTaskNotify(task_DayTime, 0, eNoAction);
+        vTaskDelay(1000 / portTICK_PERIOD_MS);
         // Take from the queue the actual measurements.
         readQueue(QueueWaterTemperature, SemWaterTemperatureQueue, &adcWaterTemperature);
         readQueue(QueueSoilHumidity, SemHumidityQueue, &adcHumidity);
-        readQueue(QueueDayTime, SemDayTimeQueue, &adcDayTime);
         readQueue(QueueAirTemperature, SemAirTemperatureQueue, &adcAirTemperature);
 
         // Check if taken values are free of the bugs.
-        if ((adcWaterTemperature != -1) && (adcHumidity != -1) && (adcDayTime != -1)) {
-            printf("Air %d | Water %d | Humidity %d | Day %d\n", adcAirTemperature, adcWaterTemperature, adcHumidity, adcDayTime);
+        if ((adcWaterTemperature != -1) && (adcHumidity != -1)) {
+            // printf("Air %d | Water %d | Humidity %d\n", adcAirTemperature, adcWaterTemperature, adcHumidity);
             // Check actual measurements and run pump.
-            if ((adcWaterTemperature >= user_temp) && (adcHumidity <= user_lowhumidity) && adcDayTime) {
+            if ((adcWaterTemperature >= user_temp) && (adcHumidity <= user_lowhumidity)) {
                 xTaskNotify(task_Irrigation, 0, eNoAction);
             }
         }
-        vTaskDelay(1 * 1000 / portTICK_PERIOD_MS);
+        vTaskDelay(5 * 1000 / portTICK_PERIOD_MS);
     }
 }

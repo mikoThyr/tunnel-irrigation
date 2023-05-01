@@ -8,6 +8,7 @@
 #include "wifi.h"
 #include "http.h"
 #include "settings.h"
+#include "task.h"
 
 #define PIN_AP_MODE     GPIO_NUM_27     // RTC_GPIO17
 

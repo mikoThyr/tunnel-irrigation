@@ -3,24 +3,30 @@
  * @brief
  */
 #include "wifi.h"
-
+#include "esp_wifi_types.h"
 /**
  *  @brief  Features to set access point config.
  */
 void wifi_ap_mode (void) {
-	wifi_config_t wifi_config = {
-		.ap = {
-			.ssid = ESP_WIFI_SSID_AP,
-			.ssid_len = strlen(ESP_WIFI_SSID_AP),
-			.channel = ESP_WIFI_CHANNEL,
-			.password = ESP_WIFI_PASS_AP,
-			.max_connection = MAX_STA_CONN,
-			.authmode = WIFI_AUTH_WPA_WPA2_PSK,
-			.pmf_cfg = {
-				.required = false,
-			},
-		},
-	};
+    char *value;
+    wifi_config_t wifi_config = {
+        .ap = {
+            .ssid = ESP_WIFI_SSID_AP,
+            .ssid_len = strlen(ESP_WIFI_SSID_AP),
+            .channel = ESP_WIFI_CHANNEL,
+            .max_connection = MAX_STA_CONN,
+            .authmode = WIFI_AUTH_WPA_WPA2_PSK,
+            .pmf_cfg = {
+                .required = false,
+            },
+        },
+    };
+    value = get_str_variable ( "storWifi", "pass" );
+    if (strlen(value) < 8) {
+        strcpy(value, "password");
+    }
+    memcpy(wifi_config.ap.password, value, strlen(value) + 1);
+    printf("wifi_config.ap.pass: %d %s\n", wifi_config.ap.password, wifi_config.ap.password);
 
 	ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_AP));
 	ESP_ERROR_CHECK(esp_wifi_set_config(ESP_IF_WIFI_AP, &wifi_config));

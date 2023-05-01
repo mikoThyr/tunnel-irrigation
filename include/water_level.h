@@ -9,8 +9,11 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "driver/gpio.h"
+#include "task.h"
 
 #define PIN_WATERLEVEL          GPIO_NUM_26    // RTC_GPIO07
+
+extern TaskHandle_t task_WaterLevel;
 
 /**
  *  @brief

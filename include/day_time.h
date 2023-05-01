@@ -9,17 +9,19 @@
 #include "esp_log.h"
 #include "driver/adc_types_legacy.h"
 #include "adc_config.h"
-#include "settings.h"
-#include "control.h"
+#include "esp_sleep.h"
+#include "esp_wifi.h"
 
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "freertos/queue.h"
 #include "freertos/semphr.h"
 
-extern SemaphoreHandle_t SemDayTimeQueue;
+#include "settings.h"
+#include "control.h"
+#include "task.h"
 
-extern QueueHandle_t QueueDayTime;
+extern TaskHandle_t task_DayTime;
 
 void check_daytime (void *pvParameters);
 

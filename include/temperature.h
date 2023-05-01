@@ -18,6 +18,10 @@
 
 #include "adc_config.h"
 #include "control.h"
+#include "task.h"
+
+extern TaskHandle_t task_AirTemperature;
+extern TaskHandle_t task_WaterTemperature;
 
 extern QueueHandle_t QueueAirTemperature;
 extern QueueHandle_t QueueWaterTemperature;

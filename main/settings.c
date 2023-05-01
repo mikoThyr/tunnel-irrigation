@@ -188,12 +188,8 @@ void set_global_variables (void) {
     ulp_day_flag = day_flag;
     printf("Time of day (-1:ERROR, 0:DAY and NIGHT, 1:DAY): %d\n", day_flag);
 
-    /* Wifi: On, ssid: admin, pass: admin */
-    wifi_flag_t dev_wifi;
-    dev_wifi = check_i8_variable("storWifi", "wifi", (uint8_t)WIFI_ON, NO_SET);
-    printf("Wifi (-1:ERROR, 0:OFF, 1:ON): %d\n", dev_wifi);
-    check_str_variable("storWifi", "ssid", "admin", NO_SET);
-    check_str_variable("storWifi", "pass", "admin", NO_SET);
+    /* Wifi: ssid: admin, pass: admin */
+    check_str_variable("storWifi", "pass", "password", NO_SET);
 
     /* Humidity lower level: 60 */
     uint8_t value;

@@ -142,12 +142,8 @@ esp_err_t wifi_handler (httpd_req_t *req) {
     <h1>Wifi</h1> \
     <form action=\"/end\" method=\"post\"> \
         <fieldset style=\"background-color: #F5F5F5\"> \
-            <legend>WiFi:</legend> \
-            <label><input type=\"radio\" name=\"wifi\" value=\"on\">On</label> \
-            <label><input type=\"radio\" name=\"wifi\" value=\"off\">Off</label> \
-            <br><br> \
-            <legend>SSID:</legend> \
-            <input type=\"text\" name=\"ssid\" style=\"display: inline-block;\"><br> \
+            <legend>ESP32 WiFi:</legend> \
+            <br> \
             <legend>Password:</legend> \
             <input type=\"password\" name=\"pass\" style=\"display: inline-block;\"> \
         </fieldset> \
@@ -171,23 +167,10 @@ esp_err_t post_handler (httpd_req_t *req) {
     printf("%s\n", data);
     token = strtok_r(data, "&", &saveptr);
     while (token != NULL) {
-        if (strstr(token, "wifi=") == token) {
-            char* val = token + strlen("wifi=");
-            if (strncmp(val, "on", strlen("on")) == 0) {
-                check_i8_variable("storWifi", "wifi", (uint8_t)WIFI_ON, SET);
-                printf("val: %s\n", val);
-            } else if (strncmp(val, "off", strlen("off")) == 0) {
-                check_i8_variable("storWifi", "wifi", (uint8_t)WIFI_OFF, SET);
-                printf("val: %s\n", val);
-            }
-        } else if (strstr(token, "ssid=") == token) {
-            char* val = token + strlen("ssid=");
-            if (strlen(val) != 0) {
-                write_nvm_data("storWifi", "ssid", val);
-            }
-        } else if (strstr(token, "pass=") == token) {
+        if (strstr(token, "pass=") == token) {
             char* val = token + strlen("pass=");
-            if ((strlen(val) != 0) && (isascii((int)val[0]) != 0)) {
+            size_t val_len = strlen(val);
+            if ((val_len >= 8) && (isascii((int)val[0]) != 0)) {
                 write_nvm_data("storWifi", "pass", val);
             }
         } else if (strstr(token, "time_day=") == token) {

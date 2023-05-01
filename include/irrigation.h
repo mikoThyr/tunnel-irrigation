@@ -11,6 +11,7 @@
 #include "driver/adc_types_legacy.h"
 #include "driver/gpio.h"
 #include "control.h"
+#include "task.h"
 
 #include "freertos/FreeRTOS.h"
 #include "freertos/queue.h"
@@ -19,6 +20,7 @@
 
 #define PIN_PUMP1_IRRIGATION    GPIO_NUM_25    // RTC_GPIO06
 
+extern TaskHandle_t task_Irrigation;
 extern QueueHandle_t QueueSoilHumidity;
 extern SemaphoreHandle_t SemHumidityQueue;
 

@@ -11,12 +11,14 @@
 #include "driver/adc_types_legacy.h"
 #include "adc_config.h"
 #include "control.h"
+#include "task.h"
 
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "freertos/queue.h"
 #include "freertos/semphr.h"
 
+extern TaskHandle_t task_SoilHumidity;
 extern QueueHandle_t QueueSoilHumidity;
 extern SemaphoreHandle_t SemHumidityQueue;
 /**
