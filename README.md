@@ -8,21 +8,21 @@ Users can configure the upper and lower levels of humidity at which watering wil
 
 ## Work progress
 - [x] "Normal" mode
+- [ ] "Eco" mode
 - [x] Web server for user configuration
 - [x] Checking water temperature
 - [x] Checking air temperature
 - [ ] Checking soil humidity
 - [x] Checking the time of day
 - [x] Control of the pump for watering
-- [ ] "Eco" mode
 - [ ] Filling the tank
 - [ ] Checking the water level in the tank
 - [ ] RF433 gathering data
 - [ ] RF433 pump control
 
 
-## Specification
-The project is built on the **ESP32-WROOM-32D** [^1] microcontroller powered by four AAA batteries.
+## Hardware
+The project is built on the **ESP32-WROOM-32D** [^1] microcontroller which can be powered by batteries source.
 ...
 
 
